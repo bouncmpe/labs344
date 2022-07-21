@@ -33,7 +33,7 @@ jobs:
         with:
           context: .
           file: docker/whisper.dockerfile
-          tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
           push: true
           cache-from: type=registry,ref=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
           cache-to: type=inline

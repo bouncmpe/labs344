@@ -34,7 +34,7 @@ jobs:
         uses: docker/build-push-action@v3
         with:
           context: .
-          tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
           push: true
           cache-from: type=registry,ref=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
           cache-to: type=inline
