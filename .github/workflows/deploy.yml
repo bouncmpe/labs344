@@ -29,11 +29,11 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Extract metadata (tags, labels) for Docker
-        id: meta
-        uses: docker/metadata-action@v4
-        with:
-          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+      # - name: Extract metadata (tags, labels) for Docker
+      #   id: meta
+      #   uses: docker/metadata-action@v4
+      #   with:
+      #     images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
 
       - name: Build
         uses: docker/build-push-action@v3
@@ -41,8 +41,7 @@ jobs:
           context: .
           file: docker/rv32imc.dockerfile
           tags: bouncmpe/rv32imc
-          cache-from: type=registry,ref=bouncmpe/rv32imc:latest
-          cache-to: type=registry,ref=bouncmpe/rv32imc:latest,mode=max
+          push: true
 
       - name: Build
         uses: docker/build-push-action@v3
@@ -50,8 +49,7 @@ jobs:
           context: .
           file: docker/whisper.dockerfile
           tags: bouncmpe/whisper
-          cache-from: type=registry,ref=bouncmpe/whisper:latest
-          cache-to: type=registry,ref=bouncmpe/whisper:latest,mode=max
+          push: true
 
       - name: Build and push Docker image
         uses: docker/build-push-action@v3
@@ -59,5 +57,3 @@ jobs:
           context: .
           tags: bouncmpe/labs344
           push: true
-          cache-from: type=registry,ref=bouncmpe/labs344:latest
-          cache-to: type=registry,ref=bouncmpe/labs344:latest,mode=max
