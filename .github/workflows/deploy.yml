@@ -39,21 +39,24 @@ jobs:
         uses: docker/build-push-action@v3
         with:
           context: .
-          file: docker/rv32imc.dockerfile
-          tags: bouncmpe/rv32imc
+          file: docker/whisper.dockerfile
+          tags: ${{ env.REGISTRY }}/bouncmpe/whisper
           push: true
 
       - name: Build
         uses: docker/build-push-action@v3
         with:
           context: .
-          file: docker/whisper.dockerfile
-          tags: bouncmpe/whisper
+          file: docker/riscv-gnu-toolchain.dockerfile
+          tags: ${{ env.REGISTRY }}/bouncmpe/rv32imc
+          build-args: |
+            "RISCV_ARCH=rv32imc"
+            "RISCV_ABI=ilp32"
           push: true
 
       - name: Build and push Docker image
         uses: docker/build-push-action@v3
         with:
           context: .
-          tags: bouncmpe/labs344
+          tags: ${{ env.REGISTRY }}/bouncmpe/labs344
           push: true
