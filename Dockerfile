@@ -1,5 +1,5 @@
-FROM bouncmpe/rv32imc as rv32imc
-FROM bouncmpe/whisper as whisper
+FROM ghcr.io/bouncmpe/rv32imc as rv32imc
+FROM ghcr.io/bouncmpe/whisper as whisper
 
 FROM ubuntu:20.04 
 
