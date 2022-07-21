@@ -5,7 +5,7 @@ on:
   push:
     tags:        
       - v*
-    branch:        
+    branches:        
       - main
 
 env:
