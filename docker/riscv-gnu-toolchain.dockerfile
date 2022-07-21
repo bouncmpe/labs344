@@ -27,7 +27,7 @@ RUN apt-get update && export DEBIAN_FRONTEND=noninteractive \
 RUN git clone --depth=1 --recursive https://github.com/riscv/riscv-gnu-toolchain
 
 RUN cd /riscv-gnu-toolchain/ \
-    && ./configure --prefix=/opt/riscv --with-arch=$RISCV_ARCH --with-abi=$RISCV_ABI\
+    && ./configure --prefix=/opt/riscv --with-arch=$RISCV_ARCH --with-abi=$RISCV_ABI \
     && make -j$(nproc)
 
 FROM ubuntu:20.04 
