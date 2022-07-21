@@ -42,6 +42,8 @@ jobs:
           file: docker/whisper.dockerfile
           tags: ${{ env.REGISTRY }}/bouncmpe/whisper
           push: true
+          cache-from: type=registry,ref=${{ env.REGISTRY }}/bouncmpe/whisper
+          cache-to: type=inline
 
       - name: Build
         uses: docker/build-push-action@v3
@@ -53,6 +55,8 @@ jobs:
             "RISCV_ARCH=rv32imc"
             "RISCV_ABI=ilp32"
           push: true
+          cache-from: type=registry,ref=${{ env.REGISTRY }}/bouncmpe/rv32imc
+          cache-to: type=inline
 
       - name: Build and push Docker image
         uses: docker/build-push-action@v3
