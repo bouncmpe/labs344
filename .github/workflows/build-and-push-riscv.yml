@@ -1,0 +1,42 @@
+name: Build and push RISC-V image
+
+on:
+  push:
+    paths:
+      - docker/riscv-gnu-toolchain.dockerfile
+      - .github/workflows/build-and-push-riscv.yml # Self-trigger
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: bouncmpe/rv32imc
+
+jobs:
+  build-and-push-image:
+    runs-on: ubuntu-20.04
+    permissions:
+      contents: read
+      packages: write
+      
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Log in to the registry
+        uses: docker/login-action@v2
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v3
+        with:
+          context: .
+          file: docker/riscv-gnu-toolchain.dockerfile
+          tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          build-args: |
+            "RISCV_ARCH=rv32imc"
+            "RISCV_ABI=ilp32"
+          push: true
+          cache-from: type=registry,ref=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          cache-to: type=registry,ref=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }},mode=max
