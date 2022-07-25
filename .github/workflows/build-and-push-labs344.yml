@@ -5,8 +5,12 @@ on:
     paths:
       - Dockerfile
       - .github/workflows/build-and-push-labs344.yml # Self-trigger
-    tags:
-      - 'v*' # Push events to matching v*, i.e. v1.0, v20.15.10
+
+  workflow_run:
+    workflows: [
+      "Build and push RISC-V image",
+      "Build and push whisper image"
+      ]
 
 env:
   REGISTRY: ghcr.io
