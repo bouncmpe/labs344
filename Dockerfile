@@ -1,7 +1,7 @@
 FROM ghcr.io/bouncmpe/rv32imc as rv32imc
 FROM ghcr.io/bouncmpe/whisper as whisper
 
-FROM ubuntu:20.04 
+FROM ubuntu:22.04 
 
 COPY --from=rv32imc /opt/riscv /opt/riscv
 COPY --from=whisper /opt/SweRV-ISS /opt/SweRV-ISS/bin
@@ -12,11 +12,12 @@ RUN apt-get update && export DEBIAN_FRONTEND=noninteractive \
     git \
     curl \
     build-essential \
-    python3 \
-    python3-venv \
-    python-is-python3 \
     verilator \
     gtkwave \
+    python3 \
+    python3-pip \
+    python3-venv \
+    python-is-python3 \
     && apt-get autoremove -y && apt-get clean -y && rm -rf /var/lib/apt/lists/* 
 
 RUN groupadd work -g 1000 \
@@ -26,4 +27,6 @@ RUN groupadd work -g 1000 \
 
 USER bouncmpe
 
-ENV PATH=$PATH:/opt/riscv/bin:/opt/SweRV-ISS/bin
+ENV PATH=/home/bouncmpe/.local/bin:/opt/riscv/bin:/opt/SweRV-ISS/bin:$PATH
+
+RUN python -m pip install --upgrade pip 

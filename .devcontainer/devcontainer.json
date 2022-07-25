@@ -1,11 +1,23 @@
 // For format details, see https://aka.ms/devcontainer.json. 
 {
     "name": "bouncmpe",
+    // Uncomment to use a prebuilt image
     "image": "ghcr.io/bouncmpe/labs344",
-    "settings": {},
-    "extensions": [
-        "platformio.platformio-ide"
-    ],
+    // Uncomment to use a custom dockerfile - specify the relative path 
+    // "dockerFile": "../Dockerfile",
+    "customizations": {
+        "vscode": {
+            "extensions": [
+                "platformio.platformio-ide",
+                "ms-azuretools.vscode-docker"
+            ],
+            "settings": {
+                // "platformio-ide.useBuiltinPIOCore": false,
+                "platformio-ide.useBuiltinPython": false,
+                "platformio-ide.customPyPiIndexUrl": ""
+            }
+        }
+    },
     // Use 'forwardPorts' to make a list of ports inside the container available locally.
     // "forwardPorts": [],
     // Uncomment to use the Docker CLI from inside the container.
