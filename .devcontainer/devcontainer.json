@@ -1,7 +1,9 @@
 // For format details, see https://aka.ms/devcontainer.json. 
 {
     "name": "bouncmpe",
-    "build": { "dockerfile": "Dockerfile" },
+    "build": { 
+        "dockerfile": "../Dockerfile" 
+    },
     "settings": {},
     "extensions": [],
     "containerEnv": {
