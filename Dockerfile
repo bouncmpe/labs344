@@ -10,8 +10,8 @@ COPY --from=whisper /opt/SweRV-ISS /opt/SweRV-ISS/bin
 RUN apt-get update && export DEBIAN_FRONTEND=noninteractive \
     && apt-get -y install \
     git \
-    curl \
     build-essential \
+    valgrind \
     verilator \
     gtkwave \
     python3 \
@@ -24,16 +24,15 @@ RUN apt-get update && export DEBIAN_FRONTEND=noninteractive \
 ENV LANG="C"
 ENV LC_ALL="C"
 
-## Test graphical apps -- xeyes, xcalc
-RUN apt-get update && export DEBIAN_FRONTEND=noninteractive \
-    && apt-get -y install \
-    x11-apps \
-    && apt-get autoremove -y && apt-get clean -y && rm -rf /var/lib/apt/lists/* 
+# Update pip and install Python packages
+RUN python -m pip install --upgrade pip \
+    && python -m pip install \
+        pycachesim
 
 RUN groupadd students -g 1000 \
     && useradd -ms /bin/bash bouncmpe -g 1000 -u 1000 
 
 USER bouncmpe
 
-ENV PATH=$PATH:/opt/riscv/bin:/opt/SweRV-ISS/bin
+ENV PATH=$PATH:/home/bouncmpe/.local/bin:/opt/riscv/bin:/opt/SweRV-ISS/bin
 
