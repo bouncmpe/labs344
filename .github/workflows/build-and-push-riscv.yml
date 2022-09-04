@@ -8,7 +8,7 @@ on:
 
 env:
   REGISTRY: ghcr.io
-  IMAGE_NAME: bouncmpe/rv32imc
+  IMAGE_NAME: bouncmpe/riscv
 
 jobs:
   build-and-push-image:
@@ -38,7 +38,7 @@ jobs:
           file: docker/riscv-gnu-toolchain.dockerfile
           tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
           build-args: |
-            "RISCV_ARCH=rv32imc"
+            "RISCV_ARCH=rv32im"
             "RISCV_ABI=ilp32"
           push: true
           cache-from: type=registry,ref=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:buildcache

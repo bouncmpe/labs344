@@ -1,6 +1,6 @@
 FROM ubuntu:20.04 as builder
 
-ARG RISCV_ARCH=rv32imc
+ARG RISCV_ARCH=rv32im
 ARG RISCV_ABI=ilp32
 
 RUN apt-get update && export DEBIAN_FRONTEND=noninteractive \
