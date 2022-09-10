@@ -1,9 +1,7 @@
 // For format details, see https://aka.ms/devcontainer.json. 
 {
     "name": "bouncmpe",
-    "build": { 
-        "dockerfile": "../Dockerfile" 
-    },
+    "image": "ghcr.io/bouncmpe/labs344",
     "settings": {},
     "extensions": [],
     "containerEnv": {
