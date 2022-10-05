@@ -20,7 +20,7 @@ The `fibonacci.elf` file is a binary executable file in the ELF format and conta
 
 Disassembling the ELF file means we convert the binary file `fibonacci.elf` in a human-readable textual file. We can disassemble ELF objects and executable using the program `objdump` as follows:
 
-```
+```bash
 riscv32-unknown-elf-objdump --disassemble fibonacci.elf > fibonacci.dis
 ```
 
