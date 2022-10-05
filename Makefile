@@ -7,7 +7,7 @@ prerequisites:
 		.
 
 	docker build \
-		--tag ghcr.io/bouncmpe/whisper 
+		--tag ghcr.io/bouncmpe/whisper \
 		--file docker/whisper.dockerfile \
 		.
 
