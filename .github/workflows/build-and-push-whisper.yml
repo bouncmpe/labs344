@@ -46,7 +46,7 @@ jobs:
           tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ matrix.targetarch }}
           build-args: |
             TARGETARCH=${{ matrix.targetarch }}
-          platforms: linux/${{ matrix.targetarch }}
+          platforms: linux/${{ matrix.platform }}
           push: false
           # cache-from: type=registry,ref=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ matrix.targetarch }}
           # cache-to: type=inline
