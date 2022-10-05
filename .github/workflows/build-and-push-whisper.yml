@@ -19,7 +19,7 @@ jobs:
 
     strategy:
       matrix:
-        targetarch: [amd64, arm64]
+        targetarch: [amd64, arm64v8]
 
     steps:
       - name: Checkout repository
