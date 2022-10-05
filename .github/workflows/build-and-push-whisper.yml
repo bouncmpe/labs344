@@ -16,7 +16,11 @@ jobs:
     permissions:
       contents: read
       packages: write
-      
+
+    strategy:
+      matrix:
+        targetarch: [amd64, arm64]
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
@@ -36,7 +40,10 @@ jobs:
         with:
           context: .
           file: docker/whisper.dockerfile
-          tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
+          tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ matrix.targetarch }}
+          build-args: |
+            TARGETARCH=${{ matrix.targetarch }}
+          platforms: linux/${{ matrix.targetarch }}
           push: true
-          cache-from: type=registry,ref=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          cache-from: type=registry,ref=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ matrix.targetarch }}
           cache-to: type=inline
