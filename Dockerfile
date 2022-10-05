@@ -6,7 +6,6 @@ FROM ubuntu:20.04
 COPY --from=riscv /opt/riscv /opt/riscv
 COPY --from=whisper /opt/SweRV-ISS /opt/SweRV-ISS/bin
 
-# Graphical apps (gtk) complain if we don't set these variables
 RUN apt-get update && export DEBIAN_FRONTEND=noninteractive \
     && apt-get -y install \
     git \
@@ -34,5 +33,5 @@ RUN groupadd students -g 1000 \
 
 USER bouncmpe
 
-ENV PATH=$PATH:/home/bouncmpe/.local/bin:/opt/riscv/bin:/opt/SweRV-ISS/bin
+ENV PATH=$PATH:/home/bouncmpe/.local/bin:/opt/SweRV-ISS/bin:/opt/riscv/bin
 
