@@ -1,4 +1,6 @@
-FROM ubuntu:20.04 as builder
+ARG TARGETARCH=amd64
+
+FROM $TARGETARCH/ubuntu:20.04 as builder
 
 RUN apt-get update && export DEBIAN_FRONTEND=noninteractive \
     && apt-get -y install \
@@ -16,5 +18,5 @@ RUN cd /SweRV-ISS \
     && mkdir -p /opt/SweRV-ISS \
     && make install INSTALL_DIR=/opt/SweRV-ISS
 
-FROM ubuntu:20.04
+FROM $TARGETARCH/ubuntu:20.04
 COPY --from=builder /opt/SweRV-ISS /opt/SweRV-ISS
