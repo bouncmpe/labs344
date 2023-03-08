@@ -16,10 +16,20 @@ jobs:
     permissions:
       contents: read
       packages: write
-      
+
+    strategy:
+      matrix:
+        include:
+          - targetarch: amd64
+            platform: amd64
+          - targetarch: arm64v8
+            platform: arm64
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v1
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v2
@@ -36,7 +46,10 @@ jobs:
         with:
           context: .
           file: docker/whisper.dockerfile
-          tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
-          push: true
-          cache-from: type=registry,ref=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
-          cache-to: type=inline
+          tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ matrix.targetarch }}
+          build-args: |
+            TARGETARCH=${{ matrix.targetarch }}
+          platforms: linux/${{ matrix.platform }}
+          push: false
+          # cache-from: type=registry,ref=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ matrix.targetarch }}
+          # cache-to: type=inline
