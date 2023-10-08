@@ -2,6 +2,10 @@ name: labs344-build
 
 on:
   workflow_dispatch:
+  workflow_run:
+    workflows: 
+      - labs344-riscv-gnu-toolchain-build
+      - labs344-whisper-build
   push:
     paths:
       - containers/labs344/**

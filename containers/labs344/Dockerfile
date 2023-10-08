@@ -1,5 +1,5 @@
-FROM ghcr.io/bouncmpe/riscv as riscv
-FROM ghcr.io/bouncmpe/whisper as whisper
+FROM ghcr.io/bouncmpe/riscv:latest as riscv
+FROM ghcr.io/bouncmpe/whisper:latest as whisper
 
 FROM ubuntu:20.04
 
