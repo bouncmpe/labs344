@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
   push:
     paths:
-      - containers/whisper/**
+      - containers/riscv-gnu-toolchain/**
       - .github/workflows/riscv-gnu-toolchain-build.yml # Self-trigger
 
 env:
