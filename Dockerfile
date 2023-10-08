@@ -4,7 +4,7 @@ FROM ghcr.io/bouncmpe/whisper as whisper
 FROM ubuntu:20.04
 
 COPY --from=riscv /opt/riscv /opt/riscv
-COPY --from=whisper /opt/SweRV-ISS /opt/SweRV-ISS/bin
+COPY --from=whisper /opt/VeeR-ISS /opt/VeeR-ISS/bin
 
 RUN apt-get update && export DEBIAN_FRONTEND=noninteractive \
     && apt-get -y install \
@@ -33,5 +33,5 @@ RUN groupadd students -g 1000 \
 
 USER bouncmpe
 
-ENV PATH=$PATH:/home/bouncmpe/.local/bin:/opt/SweRV-ISS/bin:/opt/riscv/bin
+ENV PATH=$PATH:/home/bouncmpe/.local/bin:/opt/VeeR-ISS/bin:/opt/riscv/bin
 

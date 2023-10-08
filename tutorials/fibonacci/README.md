@@ -81,7 +81,7 @@ Now you are in the interactive mode where you can give commands to the simulator
 | `peek m <ADDR>`      | Print the current content of the memory location at `ADDR` |
 | `quit`               | Quit the simulation and interactive mode                   |
 
-You can find other commands for `whisper` as listed in their docs [here](https://github.com/chipsalliance/SweRV-ISS).
+You can find other commands for `whisper` as listed in their docs [here](https://github.com/chipsalliance/VeeR-ISS).
 
 Now we are ready to simulate our Fibonacci program. Execute `step` command to advance the program by one instruction. You will see the executed instruction printed in your terminal.
 
