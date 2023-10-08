@@ -10,8 +10,9 @@ RUN apt-get update && export DEBIAN_FRONTEND=noninteractive \
 RUN git clone --depth=1 https://github.com/chipsalliance/VeeR-ISS
 
 RUN cd /VeeR-ISS \
+    && sed -i 's/#include <emmintrin.h>/\/\/#include <emmintrin.h>/g' float.cpp \
     && make -j$(nproc) \
-        SOFT_FLOAT=0 \
+        SOFT_FLOAT=1 \
         BOOST_DIR=/usr/include/boost \
     && mkdir -p /opt/VeeR-ISS \
     && make install INSTALL_DIR=/opt/VeeR-ISS
