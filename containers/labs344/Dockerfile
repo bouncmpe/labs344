@@ -5,23 +5,23 @@ ARG RISCV_ABI=ilp32
 
 RUN apt-get update && export DEBIAN_FRONTEND=noninteractive \
     && apt-get -y install \
-    git \    
-    curl \
-    autoconf automake autotools-dev \
-    libmpc-dev \
-    libmpfr-dev \
-    libgmp-dev \
-    gawk \
-    build-essential \
-    bison \
-    flex \
-    texinfo \
-    gperf \
-    libtool\ 
-    patchutils\ 
-    bc \
-    zlib1g-dev \
-    libexpat-dev \
+      git \    
+      curl \
+      autoconf automake autotools-dev \
+      libmpc-dev \
+      libmpfr-dev \
+      libgmp-dev \
+      gawk \
+      build-essential \
+      bison \
+      flex \
+      texinfo \
+      gperf \
+      libtool\ 
+      patchutils\ 
+      bc \
+      zlib1g-dev \
+      libexpat-dev \
     && apt-get autoremove -y && apt-get clean -y && rm -rf /var/lib/apt/lists/* 
 
 RUN git clone --depth=1 https://github.com/riscv/riscv-gnu-toolchain
@@ -34,9 +34,9 @@ FROM ubuntu:20.04 as whisper
 
 RUN apt-get update && export DEBIAN_FRONTEND=noninteractive \
     && apt-get -y install \
-    git \
-    build-essential \
-    libboost-all-dev \
+      git \
+      build-essential \
+      libboost-all-dev \
     && apt-get autoremove -y && apt-get clean -y && rm -rf /var/lib/apt/lists/* 
 
 RUN git clone --depth=1 https://github.com/chipsalliance/VeeR-ISS
@@ -51,8 +51,7 @@ RUN cd /VeeR-ISS \
 
 FROM ubuntu:20.04
 
-LABEL org.opencontainers.image.ref.name=ubuntu
-LABEL org.label-schema.version="23.10"
+LABEL org.opencontainers.image.source = "https://github.com/bouncmpe/labs344"
 
 COPY --from=toolchain /opt/riscv /opt/riscv
 COPY --from=whisper /opt/VeeR-ISS /opt/VeeR-ISS/bin
