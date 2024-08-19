@@ -12,15 +12,14 @@ env:
   IMAGE_NAME: bouncmpe/labs344
   IMAGE_TAG: 23.10
 
-strategy:
-  fail-fast: false
-  matrix:
-    os:
-      - ubuntu-latest
-      - macos-latest
 
 jobs:
   build:
+    strategy:
+    fail-fast: false
+    matrix:
+      os: [ubuntu-latest, macos-latest]
+      
     runs-on: ${{ matrix.os }}
     permissions:
       contents: read
