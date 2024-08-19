@@ -28,6 +28,11 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Install Docker if MacOS
+        uses: docker-practice/actions-setup-docker@master
+        timeout-minutes: 12
+        if: ${{ matrix.os == 'macos-latest' }}
+
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
