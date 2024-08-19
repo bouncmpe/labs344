@@ -1,20 +1,9 @@
-prerequisites:
-	docker build \
-		--tag ghcr.io/bouncmpe/riscv \
-		--file docker/riscv-gnu-toolchain.dockerfile \
+build:
+	docker build containers/labs344 \
+		--tag ghcr.io/bouncmpe/labs344:latest \
 		--build-arg RISCV_ARCH=rv32im \
 		--build-arg RISCV_ABI=ilp32 \
-		.
-
-	docker build \
-		--tag ghcr.io/bouncmpe/whisper \
-		--file docker/whisper.dockerfile \
-		.
-
-build:
-	docker build \
-		--tag ghcr.io/bouncmpe/labs344:latest \
-		.
+		--target labs344 
 
 run:
 	docker run --rm -it bouncmpe/labs344:latest
