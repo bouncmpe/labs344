@@ -1,4 +1,4 @@
-FROM ubuntu:24.04 as toolchain
+FROM ubuntu:24.04 AS toolchain
 ARG TARGETARCH TARGETOS TARGETPLATFORM TARGETVARIANT
 
 ARG RISCV_ARCH=rv32im
@@ -33,7 +33,7 @@ WORKDIR /riscv-gnu-toolchain
 RUN ./configure --prefix=/opt/riscv --with-arch=${RISCV_ARCH} --with-abi=${RISCV_ABI} && \
     make -j"$(nproc)"
 
-FROM docker.io/library/ubuntu:22.04 as whisper-builder
+FROM docker.io/library/ubuntu:22.04 AS whisper-builder
 ARG TARGETARCH TARGETOS TARGETPLATFORM TARGETVARIANT
 
 RUN --mount=type=cache,target=/var/cache/apt,sharing=locked,id=${TARGETPLATFORM}/var/cache/apt \
@@ -98,9 +98,9 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked,id=${TARGETPLATFORM}
         python3-pandas \
     && apt-get autoremove -y && rm -rf /var/lib/apt/lists/*
 
-ENV LC_ALL C.UTF-8
-ENV LANG C.UTF-8
-ENV LANGUAGE C.UTF-8
+ENV LC_ALL=C.UTF-8
+ENV LANG=C.UTF-8
+ENV LANGUAGE=C.UTF-8
 
 USER ubuntu
 WORKDIR /home/ubuntu
