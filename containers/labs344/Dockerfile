@@ -75,7 +75,15 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked,id=${TARGETPLATFORM}
         make \
     && apt-get autoremove -y && rm -rf /var/lib/apt/lists/*
 
-COPY --from=toolchain /opt/riscv /opt/riscv
+# COPY --from=toolchain /opt/riscv /opt/riscv
+RUN --mount=type=cache,target=/var/cache/apt,sharing=locked,id=${TARGETPLATFORM}/var/cache/apt \
+    export DEBIAN_FRONTEND=noninteractive && \
+    apt-get update -qq && \
+    apt-get install -qqy --no-install-recommends \
+        gcc-riscv64-unknown-elf \
+        binutils-riscv64-unknown-elf \
+    && apt-get autoremove -y && rm -rf /var/lib/apt/lists/*
+
 COPY --from=whisper-builder /opt/VeeR-ISS/whisper /usr/local/bin/whisper    
 
 RUN --mount=type=cache,target=/var/cache/apt,sharing=locked,id=${TARGETPLATFORM}/var/cache/apt \
