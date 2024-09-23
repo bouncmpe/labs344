@@ -9,11 +9,13 @@
       "extensions": []
     }
   },
+  "initializeCommand": "xhost +local:",
   "containerEnv": {
-    "DISPLAY": "unix:0"
+    "DISPLAY": "${localEnv:DISPLAY}"
   },
-  "mounts": [
-    "source=/tmp/.X11-unix,target=/tmp/.X11-unix,type=bind,consistency=cached"
+  "runArgs": [
+    "--env=DISPLAY",
+    "--mount=type=bind,source=/tmp/.X11-unix,target=/tmp/.X11-unix,consistency=cached"
   ],
-  "remoteUser": "ubuntu"
+  "remoteUser": "bouncmpe"
 }
