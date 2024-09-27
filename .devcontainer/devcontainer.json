@@ -1,15 +1,21 @@
-// For format details, see https://aka.ms/devcontainer.json. 
+// For format details, see https://aka.ms/devcontainer.json.
 {
-    "name": "bouncmpe",
-    "image": "ghcr.io/bouncmpe/labs344",
-    "settings": {},
-    "extensions": [],
-    "containerEnv": {
-        "DISPLAY": "unix:0"
-    },
-    "mounts": [
-        "source=/tmp/.X11-unix,target=/tmp/.X11-unix,type=bind,consistency=cached"
-    ],
-    // Uncomment to connect as a non-root user if you've added one.
-    "remoteUser": "bouncmpe"
+  "name": "labs344",
+  "context": "..",
+  "dockerFile": "../containers/labs344/Dockerfile",
+  "customizations": {
+    "vscode": {
+      "settings": {},
+      "extensions": []
+    }
+  },
+  "initializeCommand": "xhost +local:",
+  "containerEnv": {
+    "DISPLAY": "${localEnv:DISPLAY}"
+  },
+  "runArgs": [
+    "--env=DISPLAY",
+    "--mount=type=bind,source=/tmp/.X11-unix,target=/tmp/.X11-unix,consistency=cached"
+  ],
+  "remoteUser": "bouncmpe"
 }
