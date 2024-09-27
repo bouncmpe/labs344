@@ -45,5 +45,6 @@ jobs:
         with:
           context: containers/labs344
           platforms: ${{ matrix.platform }}
+          provenance: false
           push: true
           tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest,${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG }}
