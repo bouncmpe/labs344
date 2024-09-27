@@ -45,6 +45,5 @@ jobs:
         with:
           context: containers/labs344
           platforms: ${{ matrix.platform }}
-          provenance: false
-          push: true
+          push: ${{ if github.event_name == 'push' && github.ref == 'refs/heads/main' }}
           tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest,${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG }}

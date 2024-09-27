@@ -1,0 +1,24 @@
+name: ghcr-retention
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 12 * * 0"
+
+permissions:
+  contents: read
+  packages: write
+  
+jobs:
+  clean:
+    runs-on: ubuntu-latest
+    name: Github Container Registry Retention Policy
+    steps:
+      - name: Clean up untagged Autoware images
+        uses: snok/container-retention-policy@v3.0.0
+        with:
+          account: bounverif
+          token: ${{ secrets.GITHUB_TOKEN }}
+          image-names: "labs344"
+          tag-selection: untagged
+          cut-off: 1h
+          dry-run: false
