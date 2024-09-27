@@ -26,7 +26,7 @@ RUN git clone https://github.com/chipsalliance/VeeR-ISS && \
     mkdir -p /opt/VeeR-ISS && \
     make install INSTALL_DIR=/opt/VeeR-ISS
 
-FROM docker.io/verilator/verilator:v5.028 AS verilator
+FROM docker.io/verilator/verilator:v5.028 AS labs344
 ARG TARGETARCH TARGETOS TARGETPLATFORM TARGETVARIANT
 
 # hadolint ignore=DL3008
@@ -99,3 +99,5 @@ ENV LABS_BUILD_DIR=/home/bouncmpe/labs344/build
 
 RUN git clone --depth=1 --recurse-submodules --shallow-submodules \
         https://github.com/chipsalliance/Cores-VeeR-EL2.git ${RV_ROOT}
+
+ENTRYPOINT ["/bin/bash"]

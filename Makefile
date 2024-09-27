@@ -1,11 +1,14 @@
-build:
-	docker build containers/labs344 \
-		--tag ghcr.io/bouncmpe/labs344:latest \
-		--build-arg RISCV_ARCH=rv32im \
-		--build-arg RISCV_ABI=ilp32 \
-		--target labs344 
+CONTEXT ?= .
 
+all: build
+
+build:
+	docker build ${CONTEXT} \
+		-f containers/labs344/Dockerfile \
+		--tag bouncmpe/labs344:latest \
+		--target labs344
+	
 run:
 	docker run --rm -it bouncmpe/labs344:latest
 
-all: build
+.PHONY: all build run
