@@ -1,0 +1,17 @@
+/build
+
+# Ignore the following files
+*.vcd
+*.log 
+*.hex 
+*.dis 
+*.tbl 
+*.map 
+snapshots 
+veer* 
+verilator* 
+*.elf 
+*.exe 
+obj* 
+*.o 
+*.sym 
