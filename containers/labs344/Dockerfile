@@ -91,13 +91,9 @@ WORKDIR /home/bouncmpe
 # hadolint ignore=DL3013
 RUN python3 -m pip install --no-cache-dir --user meson numpy pandas matplotlib
 
-ENV RV_ROOT=/home/bouncmpe/Cores-VeeR-EL2
-ENV RV_BUILD_DIR=/home/bouncmpe/Cores-VeeR-EL2
-
-ENV LABS_SRC_DIR=/home/bouncmpe/labs344
-ENV LABS_BUILD_DIR=/home/bouncmpe/labs344/build
-
 RUN git clone --depth=1 --recurse-submodules --shallow-submodules \
-        https://github.com/chipsalliance/Cores-VeeR-EL2.git ${RV_ROOT}
+        https://github.com/chipsalliance/Cores-VeeR-EL2.git /home/bouncmpe/cores/VeerEL2 &&\
+    git clone --depth=1 --recurse-submodules --shallow-submodules \
+        https://github.com/chipsalliance/Cores-VeeR-EH1.git /home/bouncmpe/cores/VeerEH1
 
 ENTRYPOINT ["/bin/bash"]
