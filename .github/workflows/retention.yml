@@ -13,10 +13,10 @@ jobs:
     runs-on: ubuntu-latest
     name: Github Container Registry Retention Policy
     steps:
-      - name: Clean up untagged Autoware images
+      - name: Clean up untagged images
         uses: snok/container-retention-policy@v3.0.0
         with:
-          account: bounverif
+          account: bouncmpe
           token: ${{ secrets.GITHUB_TOKEN }}
           image-names: "labs344"
           tag-selection: untagged
