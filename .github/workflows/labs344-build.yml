@@ -16,7 +16,7 @@ jobs:
   build:
     strategy:
       matrix:
-        platform: [ubuntu-latest, ubuntu-latest-arm]
+        platform: [ubuntu-24.04, ubuntu-24.04-arm]
     runs-on: ${{ matrix.platform }}
     permissions:
       id-token: write
