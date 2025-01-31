@@ -50,8 +50,7 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           context: containers/labs344
-          provenance: mode=max
-          tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest,${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG }}
+          platforms: ${{ matrix.platform }}
           outputs: type=image,"name=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}",push-by-digest=true,name-canonical=true,push=true
 
       - name: Export digest
@@ -96,7 +95,10 @@ jobs:
         with:
           images: |
             ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
-
+          tags: |
+            type=raw,value=${{ env.IMAGE_TAG }}
+            type=raw,value=latest,enable={{ is_default_branch }}
+            
       - name: Create manifest list and push
         working-directory: ${{ runner.temp }}/digests
         run: |
