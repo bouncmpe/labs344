@@ -58,6 +58,8 @@ jobs:
         with:
           context: containers/labs344
           outputs: type=image,"name=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}",push-by-digest=true,name-canonical=true,push=true
+          provenance: false
+          sbom: false
 
       - name: Export digest
         run: |
