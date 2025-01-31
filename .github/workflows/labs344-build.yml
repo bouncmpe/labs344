@@ -26,6 +26,12 @@ jobs:
       packages: write
 
     steps:
+      - name: Get platform pair
+        run: |
+          platform_info=$(docker info --format '{{.OSType}}/{{.Architecture}}')
+          platform_pair=$(echo "$platform_info" | sed 's/\//-/g')
+          echo "PLATFORM_PAIR=${platform_pair}" >> $GITHUB_ENV
+          
       - name: Checkout repository
         uses: actions/checkout@v4
         
