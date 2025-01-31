@@ -50,7 +50,6 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           context: containers/labs344
-          platforms: ${{ matrix.platform }}
           outputs: type=image,"name=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}",push-by-digest=true,name-canonical=true,push=true
 
       - name: Export digest
