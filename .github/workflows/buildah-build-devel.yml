@@ -4,7 +4,7 @@ on:
   push:
     paths:
       - .github/workflows/buildah-build-devel.yml # Self-trigger
-      - containers/labs/**
+      - containers/labs344/**
 
 env:
   REGISTRY: ghcr.io/bouncmpe
