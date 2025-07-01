@@ -79,7 +79,7 @@ jobs:
           extra-args: |
             --target bouncmpe-labs344-base
           containerfiles: |
-            containers/bouncmpe-labs344-devel/Dockerfile
+            containers/labs344/Dockerfile
           context: containers
 
       - name: Build builder container image
@@ -97,25 +97,7 @@ jobs:
           extra-args: |
             --target bouncmpe-labs344-builder
           containerfiles: |
-            containers/bouncmpe-labs344-devel/Dockerfile
-          context: containers
-
-      - name: Build builder-with-cache container image
-        id: build-builder-with-cache
-        uses: redhat-actions/buildah-build@v2
-        with:
-          image: ${{ env.IMAGE_NAME }}
-          tags: |
-            ${{ env.LABS344_VERSION }}-builder-with-cache
-            ${{ env.LABS344_VERSION }}-builder-with-cache-${{ env.HOSTARCH }}
-          layers: true
-          oci: true
-          build-args: |
-            LABS344_VERSION=${{ env.LABS344_VERSION }}
-          extra-args: |
-            --target bouncmpe-labs344-builder-with-cache
-          containerfiles: |
-            containers/bouncmpe-labs344-devel/Dockerfile
+            containers/labs344/Dockerfile
           context: containers
 
       - name: Build devel container image
@@ -133,7 +115,7 @@ jobs:
           extra-args: |
             --target bouncmpe-labs344-devel
           containerfiles: |
-            containers/bouncmpe-labs344-devel/Dockerfile
+            containers/labs344/Dockerfile
           context: containers
 
       - name: Push to GitHub Container Repository
