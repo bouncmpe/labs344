@@ -1,7 +1,7 @@
-FROM docker.io/library/ubuntu:24.04 AS bouncmpe-labs344-base
+FROM docker.io/library/ubuntu:22.04 AS bouncmpe-labs344-base
 ARG TARGETARCH TARGETOS TARGETPLATFORM TARGETVARIANT
 
-FROM docker.io/library/ubuntu:24.04 AS bouncmpe-labs344-builder
+FROM docker.io/library/ubuntu:22.04 AS bouncmpe-labs344-builder
 ARG TARGETARCH TARGETOS TARGETPLATFORM TARGETVARIANT
 
 # hadolint ignore=DL3008
@@ -24,7 +24,7 @@ RUN git clone https://github.com/openhwgroup/cvw \
     && bash ./bin/wally-tool-chain-install.sh \
     && cd .. && rm -rf cvw
 
-FROM docker.io/library/ubuntu:24.04 AS bouncmpe-labs344-devel
+FROM docker.io/library/ubuntu:22.04 AS bouncmpe-labs344-devel
 ARG TARGETARCH TARGETOS TARGETPLATFORM TARGETVARIANT
 
 # FROM docker.io/verilator/verilator:v5.028 AS labs344
