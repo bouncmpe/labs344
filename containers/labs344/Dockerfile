@@ -25,6 +25,13 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked,id=${TARGETPLATFORM}
         cmake \
     && apt-get autoremove -y && apt-get clean -y && rm -rf /var/lib/apt/lists/* 
 
+RUN --mount=type=cache,target=/var/cache/apt,sharing=locked,id=${TARGETPLATFORM}/var/cache/apt \
+    apt-get update && export DEBIAN_FRONTEND=noninteractive \
+    && apt-get install -qqy --no-install-recommends \
+        gcc-riscv64-unknown-elf \
+        binutils-riscv64-unknown-elf \
+    && apt-get autoremove -y && apt-get clean -y && rm -rf /var/lib/apt/lists/* 
+
 RUN git clone https://github.com/openhwgroup/cvw && \
     cd cvw && \
     git checkout main && \
