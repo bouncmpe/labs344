@@ -47,8 +47,8 @@ RUN git clone https://github.com/openhwgroup/cvw && \
     bash -c ". $WALLY/bin/installation/elf2hex-install.sh" && \
     bash -c ". $WALLY/bin/installation/qemu-install.sh" && \
     bash -c ". $WALLY/bin/installation/spike-install.sh" && \
-    bash -c ". $WALLY/bin/installation/sail-install.sh" && \
-    bash -c ". $WALLY/bin/installation/verilator-install" && \
+    # bash -c ". $WALLY/bin/installation/sail-install.sh" && \
+    bash -c ". $WALLY/bin/installation/verilator-install.sh" && \
     cd .. && rm -rf cvw
 
 FROM ${LABS344_BUILDER_IMAGE} AS labs344-devel
