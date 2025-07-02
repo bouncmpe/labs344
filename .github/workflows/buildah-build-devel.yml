@@ -9,7 +9,7 @@ on:
 env:
   REGISTRY: ghcr.io/bouncmpe
   IMAGE_NAME: labs344
-  LABS344_VERSION: 2025.0
+  LABS344_VERSION: latest
   CONTAINERS_ROOT: /home/runner/.local/share/containers
   TMPDIR: /home/runner/.local/share/containers/tmp
 
@@ -51,11 +51,7 @@ jobs:
         run: |
           echo "HOSTARCH=$(podman info --format='{{.Host.Arch}}')" >> $GITHUB_ENV
           echo "PLATFORM=$(podman info --format='{{.Version.OsArch}}' | sed 's/\//-/g')" >> $GITHUB_ENV
-
-      - name: Create VERSION file for the container
-        run: |
-          mkdir -p containers/etc/bouncmpe
-          echo ${{ env.LABS344_VERSION }} > containers/etc/bouncmpe/VERSION
+          echo "LABS344_VERSION=$(date +'%Y%m%d')" >> $GITHUB_ENV
 
       - name: Log in to the GitHub Container registry
         uses: redhat-actions/podman-login@v1
@@ -63,24 +59,6 @@ jobs:
           registry: ${{ env.REGISTRY }}
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Build base container image
-        id: build-base
-        uses: redhat-actions/buildah-build@v2
-        with:
-          image: ${{ env.IMAGE_NAME }}
-          tags: |
-            ${{ env.LABS344_VERSION }}-base
-            ${{ env.LABS344_VERSION }}-base-${{ env.HOSTARCH }}
-          layers: true
-          oci: true
-          build-args: |
-            LABS344_VERSION=${{ env.LABS344_VERSION }}
-          extra-args: |
-            --target bouncmpe-labs344-base
-          containerfiles: |
-            containers/labs344/Dockerfile
-          context: containers
 
       - name: Build builder container image
         id: build-builder
@@ -95,7 +73,7 @@ jobs:
           build-args: |
             LABS344_VERSION=${{ env.LABS344_VERSION }}
           extra-args: |
-            --target bouncmpe-labs344-builder
+            --target labs344-builder
           containerfiles: |
             containers/labs344/Dockerfile
           context: containers
@@ -113,20 +91,10 @@ jobs:
           build-args: |
             LABS344_VERSION=${{ env.LABS344_VERSION }}
           extra-args: |
-            --target bouncmpe-labs344-devel
+            --target labs344-devel
           containerfiles: |
             containers/labs344/Dockerfile
           context: containers
-
-      - name: Push to GitHub Container Repository
-        if: github.ref == 'refs/heads/main'
-        id: push-base-ghcr
-        uses: redhat-actions/push-to-registry@v2
-        with:
-          registry: ${{ env.REGISTRY }}
-          image: ${{ steps.build-base.outputs.image }}
-          tags: ${{ env.LABS344_VERSION }}-base-${{ env.HOSTARCH }}
-          digestfile: ${{ runner.temp }}/digest-bouncmpe-labs344-base-${{ env.LABS344_VERSION }}-${{ env.PLATFORM }}
 
       - name: Push to GitHub Container Repository
         if: github.ref == 'refs/heads/main'
@@ -136,17 +104,7 @@ jobs:
           registry: ${{ env.REGISTRY }}
           image: ${{ steps.build-builder.outputs.image }}
           tags: ${{ env.LABS344_VERSION }}-builder-${{ env.HOSTARCH }}
-          digestfile: ${{ runner.temp }}/digest-bouncmpe-labs344-builder-${{ env.LABS344_VERSION }}-${{ env.PLATFORM }}
-
-      - name: Push to GitHub Container Repository
-        if: github.ref == 'refs/heads/main'
-        id: push-builder-with-cache-ghcr
-        uses: redhat-actions/push-to-registry@v2
-        with:
-          registry: ${{ env.REGISTRY }}
-          image: ${{ steps.build-builder-with-cache.outputs.image }}
-          tags: ${{ env.LABS344_VERSION }}-builder-with-cache-${{ env.HOSTARCH }}
-          digestfile: ${{ runner.temp }}/digest-bouncmpe-bwithcache-${{ env.LABS344_VERSION }}-${{ env.PLATFORM }}
+          digestfile: ${{ runner.temp }}/digest-labs344-builder-${{ env.LABS344_VERSION }}-${{ env.PLATFORM }}
 
       - name: Push to GitHub Container Repository
         if: github.ref == 'refs/heads/main'
@@ -156,7 +114,7 @@ jobs:
           registry: ${{ env.REGISTRY }}
           image: ${{ steps.build-devel.outputs.image }}
           tags: ${{ env.LABS344_VERSION }}-devel-${{ env.HOSTARCH }}
-          digestfile: ${{ runner.temp }}/digest-bouncmpe-labs344-devel-${{ env.LABS344_VERSION }}-${{ env.PLATFORM }}
+          digestfile: ${{ runner.temp }}/digest-labs344-devel-${{ env.LABS344_VERSION }}-${{ env.PLATFORM }}
 
       - name: Upload digests
         if: github.ref == 'refs/heads/main'
@@ -181,6 +139,10 @@ jobs:
           pattern: digest-*
           merge-multiple: true
 
+      - name: Prepare environment variables
+        run: |
+          echo "LABS344_VERSION=$(date +'%Y%m%d')" >> $GITHUB_ENV
+
       - name: Log in to the GitHub Container registry
         uses: redhat-actions/podman-login@v1
         with:
@@ -188,38 +150,26 @@ jobs:
           username: ${{ github.repository_owner }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Create and push manifest list for bouncmpe-labs344-base
+      - name: Create and push manifest list for labs344-builder
         run: |
-          MANIFEST=bouncmpe-labs344-base
+          MANIFEST=labs344-builder
           FULL_IMAGE_NAME=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
           buildah manifest create $MANIFEST
-          for digest in ${{ runner.temp }}/digests/digest-bouncmpe-labs344-base-*; do
-            echo "Adding $(cat $digest)"
-            buildah manifest add $MANIFEST $FULL_IMAGE_NAME@$(cat $digest)
-          done
-          buildah manifest push --all $MANIFEST docker://$FULL_IMAGE_NAME:${{ env.LABS344_VERSION }}-base
-          buildah manifest push --all $MANIFEST docker://$FULL_IMAGE_NAME:latest-base 
-          
-      - name: Create and push manifest list for bouncmpe-labs344-builder
-        run: |
-          MANIFEST=bouncmpe-labs344-builder
-          FULL_IMAGE_NAME=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
-          buildah manifest create $MANIFEST
-          for digest in ${{ runner.temp }}/digests/digest-bouncmpe-labs344-builder-*; do
+          for digest in ${{ runner.temp }}/digests/digest-labs344-builder-*; do
             echo "Adding $(cat $digest)"
             buildah manifest add $MANIFEST $FULL_IMAGE_NAME@$(cat $digest)
           done
           buildah manifest push --all $MANIFEST docker://$FULL_IMAGE_NAME:${{ env.LABS344_VERSION }}-builder
-          buildah manifest push --all $MANIFEST docker://$FULL_IMAGE_NAME:latest-builder 
+          buildah manifest push --all $MANIFEST docker://$FULL_IMAGE_NAME:latest-builder
 
-      - name: Create and push manifest list for bouncmpe-labs344-devel
+      - name: Create and push manifest list for labs344-devel
         run: |
-          MANIFEST=bouncmpe-labs344-devel
+          MANIFEST=labs344-devel
           FULL_IMAGE_NAME=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
           buildah manifest create $MANIFEST
-          for digest in ${{ runner.temp }}/digests/digest-bouncmpe-labs344-devel-*; do
+          for digest in ${{ runner.temp }}/digests/digest-labs344-devel-*; do
             echo "Adding $(cat $digest)"
             buildah manifest add $MANIFEST $FULL_IMAGE_NAME@$(cat $digest)
           done
           buildah manifest push --all $MANIFEST docker://$FULL_IMAGE_NAME:${{ env.LABS344_VERSION }}-devel
-          buildah manifest push --all $MANIFEST docker://$FULL_IMAGE_NAME:latest-devel 
+          buildah manifest push --all $MANIFEST docker://$FULL_IMAGE_NAME:latest-devel

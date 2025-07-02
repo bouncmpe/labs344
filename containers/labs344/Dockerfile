@@ -1,7 +1,14 @@
-FROM docker.io/library/ubuntu:22.04 AS bouncmpe-labs344-base
-ARG TARGETARCH TARGETOS TARGETPLATFORM TARGETVARIANT
+ARG LABS344_VERSION=latest
+ARG LABS344_DEBIAN_VERSION=12
+ARG LABS344_IMAGE_REGISTRY=localhost
+ARG LABS344_IMAGE_REGISTRY_REMOTE=${LABS344_IMAGE_REGISTRY}
+ARG LABS344_IMAGE_NAME=labs344
+ARG LABS344_IMAGE_NAME_FULL=${LABS344_IMAGE_REGISTRY}/${LABS344_IMAGE_NAME}
+ARG LABS344_IMAGE_VERSION=${LABS344_VERSION}
+ARG LABS344_BUILDER_IMAGE=${LABS344_IMAGE_NAME_FULL}:${LABS344_IMAGE_VERSION}-builder
+ARG LABS344_DEVEL_IMAGE=${LABS344_IMAGE_NAME_FULL}:${LABS344_IMAGE_VERSION}-devel
 
-FROM docker.io/library/ubuntu:22.04 AS bouncmpe-labs344-builder
+FROM docker.io/library/debian:${LABS344_DEBIAN_VERSION} AS labs344-builder
 ARG TARGETARCH TARGETOS TARGETPLATFORM TARGETVARIANT
 
 # hadolint ignore=DL3008
@@ -15,16 +22,17 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked,id=${TARGETPLATFORM}
         ca-certificates \
         build-essential \
         make \
+        cmake \
     && apt-get autoremove -y && apt-get clean -y && rm -rf /var/lib/apt/lists/* 
 
 RUN git clone https://github.com/openhwgroup/cvw \
     && cd cvw \
     && git checkout main \
     && git submodule update --init --recursive \
-    && bash ./bin/wally-tool-chain-install.sh \
+    && bash ./bin/installation/riscv-gnu-toolchain-install.sh \
     && cd .. && rm -rf cvw
 
-FROM docker.io/library/ubuntu:22.04 AS bouncmpe-labs344-devel
+FROM ${LABS344_BUILDER_IMAGE} AS labs344-devel
 ARG TARGETARCH TARGETOS TARGETPLATFORM TARGETVARIANT
 
 # FROM docker.io/verilator/verilator:v5.028 AS labs344
