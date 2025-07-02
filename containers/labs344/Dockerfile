@@ -25,17 +25,19 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked,id=${TARGETPLATFORM}
         cmake \
     && apt-get autoremove -y && apt-get clean -y && rm -rf /var/lib/apt/lists/* 
 
-RUN git clone https://github.com/openhwgroup/cvw \
-    && cd cvw \
-    && git checkout main \
-    && git submodule update --init --recursive \
-    && export WALLY=$(pwd) \
-    && . $WALLY/bin/wally-environment-check.sh \
-    && . $WALLY/bin/wally-package-install.sh \
-    && . $WALLY/bin/installation/python-setup.sh \
-    && . $WALLY/bin/installation/activate-tools.sh \ 
-    && . $WALLY/bin/installation/riscv-gnu-toolchain-install.sh \
-    && cd .. && rm -rf cvw
+RUN git clone https://github.com/openhwgroup/cvw && \
+    cd cvw && \
+    git checkout main && \
+    git submodule update --init --recursive && \
+    export WALLY=$(pwd) && \
+    export RISCV=/opt/riscv && \
+    export PYTHON_VERSION=python3.11 && \
+    bash -c ". $WALLY/bin/wally-environment-check.sh" && \
+    bash -c ". $WALLY/bin/wally-package-install.sh" && \
+    bash -c ". $WALLY/bin/installation/python-setup.sh" && \
+    bash -c ". $WALLY/bin/installation/activate-tools.sh" && \
+    bash -c ". $WALLY/bin/installation/riscv-gnu-toolchain-install.sh" && \
+    cd .. && rm -rf cvw
 
 FROM ${LABS344_BUILDER_IMAGE} AS labs344-devel
 ARG TARGETARCH TARGETOS TARGETPLATFORM TARGETVARIANT
