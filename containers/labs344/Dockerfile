@@ -29,7 +29,12 @@ RUN git clone https://github.com/openhwgroup/cvw \
     && cd cvw \
     && git checkout main \
     && git submodule update --init --recursive \
-    && bash ./bin/installation/riscv-gnu-toolchain-install.sh \
+    && export WALLY=$(pwd) \
+    && . $WALLY/bin/wally-environment-check.sh \
+    && . $WALLY/bin/wally-package-install.sh \
+    && . $WALLY/bin/installation/python-setup.sh \
+    && . $WALLY/bin/installation/activate-tools.sh \ 
+    && . $WALLY/bin/installation/riscv-gnu-toolchain-install.sh \
     && cd .. && rm -rf cvw
 
 FROM ${LABS344_BUILDER_IMAGE} AS labs344-devel
