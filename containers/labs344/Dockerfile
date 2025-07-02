@@ -36,7 +36,7 @@ RUN git clone https://github.com/openhwgroup/cvw && \
     bash -c ". $WALLY/bin/wally-package-install.sh" && \
     bash -c ". $WALLY/bin/installation/python-setup.sh" && \
     bash -c ". $WALLY/bin/installation/activate-tools.sh" && \
-    bash -c ". $WALLY/bin/installation/riscv-gnu-toolchain-install.sh" && \
+    # bash -c ". $WALLY/bin/installation/riscv-gnu-toolchain-install.sh" && \
     cd .. && rm -rf cvw
 
 FROM ${LABS344_BUILDER_IMAGE} AS labs344-devel
