@@ -1,4 +1,5 @@
 /build
+*.old
 
 # Ignore the following files
 *.vcd
