@@ -6,7 +6,8 @@ ARG LABS344_IMAGE_NAME=labs344
 ARG LABS344_IMAGE_NAME_FULL=${LABS344_IMAGE_REGISTRY}/${LABS344_IMAGE_NAME}
 ARG LABS344_IMAGE_VERSION=${LABS344_VERSION}
 ARG LABS344_BUILDER_IMAGE=${LABS344_IMAGE_NAME_FULL}:${LABS344_IMAGE_VERSION}-builder
-ARG LABS344_DEVEL_IMAGE=${LABS344_IMAGE_NAME_FULL}:${LABS344_IMAGE_VERSION}-devel
+ARG LABS344_TOOLCHAIN_IMAGE=${LABS344_IMAGE_NAME_FULL}:${LABS344_IMAGE_VERSION}-toolchain
+ARG LABS344_TOOLS_IMAGE=${LABS344_IMAGE_NAME_FULL}:${LABS344_IMAGE_VERSION}-tools
 
 ARG LABS344_RISCV_GNU_TOOLCHAIN_VERSION=23863c2ca74e6c050f0c97e7af61f5f1776aadd1
 
@@ -49,6 +50,7 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked,id=${TARGETPLATFORM}
 ARG LABS344_RISCV_GNU_TOOLCHAIN_VERSION
 ENV LABS344_RISCV_GNU_TOOLCHAIN_VERSION=${LABS344_RISCV_GNU_TOOLCHAIN_VERSION}
 ENV LABS344_RISCV_DIR=/opt/riscv
+ENV PATH=${LABS344_RISCV_DIR}/riscv-gnu-toolchain/bin:$PATH
 
 RUN git clone https://github.com/riscv/riscv-gnu-toolchain /tmp/riscv-gnu-toolchain && \
     cd /tmp/riscv-gnu-toolchain && \
@@ -57,23 +59,30 @@ RUN git clone https://github.com/riscv/riscv-gnu-toolchain /tmp/riscv-gnu-toolch
     make install && \
     rm -rf /tmp/riscv-gnu-toolchain
 
-RUN --mount=type=cache,target=/var/cache/apt,sharing=locked,id=${TARGETPLATFORM}/var/cache/apt \
-    apt-get update && export DEBIAN_FRONTEND=noninteractive \
-    && apt-get install -qqy --no-install-recommends \
-        curl \
-        wget \
-        git \
-        gnupg2 \
-        ca-certificates \
-        build-essential \
-        make \
-        cmake \
-    && apt-get autoremove -y && apt-get clean -y && rm -rf /var/lib/apt/lists/*
-
-FROM docker.io/library/debian:${LABS344_DEBIAN_VERSION} AS labs344-builder
+FROM ${LABS344_TOOLCHAIN_IMAGE} AS labs344-tools
 ARG TARGETARCH TARGETOS TARGETPLATFORM TARGETVARIANT
 
-# hadolint ignore=DL3008
+RUN git clone https://github.com/sifive/elf2hex.git /tmp/elf2hex && \
+    cd /tmp/elf2hex && \
+    autoreconf -i && \
+    ./configure --target=riscv64-unknown-elf --prefix=${LABS344_RISCV_DIR} && \
+    make -j$(nproc) && \
+    make install && \
+    rm -rf /tmp/elf2hex
+
+RUN git clone https://github.com/riscv-software-src/riscv-isa-sim /tmp/riscv-isa-sim && \
+    mkdir -p /tmp/riscv-isa-sim/build && \
+    cd /tmp/riscv-isa-sim/build && \
+    ../configure --prefix=${LABS344_RISCV_DIR} && \
+    make -j$(nproc) && \
+    make install && \
+    && rm -rf /tmp/riscv-isa-sim
+
+FROM docker.io/library/debian:${LABS344_DEBIAN_VERSION} AS labs344
+ARG TARGETARCH TARGETOS TARGETPLATFORM TARGETVARIANT
+
+COPY --from=labs344-tools /opt/riscv /opt/riscv
+
 RUN --mount=type=cache,target=/var/cache/apt,sharing=locked,id=${TARGETPLATFORM}/var/cache/apt \
     apt-get update && export DEBIAN_FRONTEND=noninteractive \
     && apt-get install -qqy --no-install-recommends \
@@ -85,13 +94,9 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked,id=${TARGETPLATFORM}
         build-essential \
         make \
         cmake \
-    && apt-get autoremove -y && apt-get clean -y && rm -rf /var/lib/apt/lists/* 
-
-RUN --mount=type=cache,target=/var/cache/apt,sharing=locked,id=${TARGETPLATFORM}/var/cache/apt \
-    apt-get update && export DEBIAN_FRONTEND=noninteractive \
-    && apt-get install -qqy --no-install-recommends \
-        gcc-riscv64-unknown-elf \
-        binutils-riscv64-unknown-elf \
+        ninja-build \
+        python3-minimal \
+        python3-pip \
     && apt-get autoremove -y && apt-get clean -y && rm -rf /var/lib/apt/lists/* 
 
 FROM ${LABS344_BUILDER_IMAGE} AS labs344-devel
