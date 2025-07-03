@@ -8,6 +8,68 @@ ARG LABS344_IMAGE_VERSION=${LABS344_VERSION}
 ARG LABS344_BUILDER_IMAGE=${LABS344_IMAGE_NAME_FULL}:${LABS344_IMAGE_VERSION}-builder
 ARG LABS344_DEVEL_IMAGE=${LABS344_IMAGE_NAME_FULL}:${LABS344_IMAGE_VERSION}-devel
 
+ARG LABS344_RISCV_GNU_TOOLCHAIN_VERSION=23863c2ca74e6c050f0c97e7af61f5f1776aadd1
+
+FROM docker.io/library/debian:${LABS344_DEBIAN_VERSION} AS labs344-toolchain
+ARG TARGETARCH TARGETOS TARGETPLATFORM TARGETVARIANT
+
+RUN --mount=type=cache,target=/var/cache/apt,sharing=locked,id=${TARGETPLATFORM}/var/cache/apt \
+    export DEBIAN_FRONTEND=noninteractive && \
+    apt-get update -qq && \
+    apt-get install -qy --no-install-recommends \
+      autoconf \
+      automake \
+      autotools-dev \
+      curl \
+      python3 \
+      python3-pip \
+      python3-tomli \
+      libmpc-dev \
+      libmpfr-dev \
+      libgmp-dev \
+      gawk \
+      build-essential \
+      bison \
+      flex \
+      texinfo \
+      gperf \
+      libtool \
+      patchutils \
+      bc \
+      zlib1g-dev \
+      libexpat-dev \
+      ninja-build \
+      git \
+      cmake \
+      libglib2.0-dev \
+      libslirp-dev \
+      && \
+    apt-get autoremove -y && rm -rf /var/lib/apt/lists/*
+
+ARG LABS344_RISCV_GNU_TOOLCHAIN_VERSION
+ENV LABS344_RISCV_GNU_TOOLCHAIN_VERSION=${LABS344_RISCV_GNU_TOOLCHAIN_VERSION}
+ENV LABS344_RISCV_DIR=/opt/riscv
+
+RUN git clone https://github.com/riscv/riscv-gnu-toolchain /tmp/riscv-gnu-toolchain && \
+    cd /tmp/riscv-gnu-toolchain && \
+    ./configure --prefix=${LABS344_RISCV_DIR} --enable-multilib --with-multilib-generator="rv32e-ilp32e--;rv32i-ilp32--;rv32im-ilp32--;rv32iac-ilp32--;rv32imac-ilp32--;rv32imafc-ilp32f--;rv32imafdc-ilp32d--;rv64i-lp64--;rv64ic-lp64--;rv64iac-lp64--;rv64imac-lp64--;rv64imafdc-lp64d--;rv64im-lp64--;" && \
+    make -j$(nproc) && \
+    make install && \
+    rm -rf /tmp/riscv-gnu-toolchain
+
+RUN --mount=type=cache,target=/var/cache/apt,sharing=locked,id=${TARGETPLATFORM}/var/cache/apt \
+    apt-get update && export DEBIAN_FRONTEND=noninteractive \
+    && apt-get install -qqy --no-install-recommends \
+        curl \
+        wget \
+        git \
+        gnupg2 \
+        ca-certificates \
+        build-essential \
+        make \
+        cmake \
+    && apt-get autoremove -y && apt-get clean -y && rm -rf /var/lib/apt/lists/*
+
 FROM docker.io/library/debian:${LABS344_DEBIAN_VERSION} AS labs344-builder
 ARG TARGETARCH TARGETOS TARGETPLATFORM TARGETVARIANT
 
@@ -32,6 +94,9 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked,id=${TARGETPLATFORM}
         binutils-riscv64-unknown-elf \
     && apt-get autoremove -y && apt-get clean -y && rm -rf /var/lib/apt/lists/* 
 
+FROM ${LABS344_BUILDER_IMAGE} AS labs344-devel
+ARG TARGETARCH TARGETOS TARGETPLATFORM TARGETVARIANT
+
 RUN git clone https://github.com/openhwgroup/cvw && \
     cd cvw && \
     git checkout main && \
@@ -51,8 +116,6 @@ RUN git clone https://github.com/openhwgroup/cvw && \
     bash -c ". $WALLY/bin/installation/verilator-install.sh" && \
     cd .. && rm -rf cvw
 
-FROM ${LABS344_BUILDER_IMAGE} AS labs344-devel
-ARG TARGETARCH TARGETOS TARGETPLATFORM TARGETVARIANT
 
 # FROM docker.io/verilator/verilator:v5.028 AS labs344
 # ARG TARGETARCH TARGETOS TARGETPLATFORM TARGETVARIANT
