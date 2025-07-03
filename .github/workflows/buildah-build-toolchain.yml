@@ -4,13 +4,9 @@ on:
     inputs:
       publish:
         description: "Release notes"
-        required: false
-        default: false
+        required: true
+        default: true
         type: boolean
-
-  push:
-    paths:
-      - .github/workflows/buildah-build-toolchain.yml # Self-trigger
 
 env:
   REGISTRY: ghcr.io/bouncmpe
@@ -86,7 +82,7 @@ jobs:
           context: containers
 
       - name: Push to GitHub Container Repository
-        if: github.ref == 'refs/heads/main' || (github.event_name == 'workflow_dispatch' && github.event.inputs.publish)
+        if: github.ref == 'refs/heads/main' && github.event_name == 'workflow_dispatch' && github.event.inputs.publish
         id: push-toolchain-ghcr
         uses: redhat-actions/push-to-registry@v2
         with:
@@ -96,7 +92,7 @@ jobs:
           digestfile: ${{ runner.temp }}/digest-labs344-toolchain-${{ env.LABS344_VERSION }}-${{ env.PLATFORM }}
 
       - name: Upload digests
-        if: github.ref == 'refs/heads/main' || (github.event_name == 'workflow_dispatch' && github.event.inputs.publish)
+        if: github.ref == 'refs/heads/main' && github.event_name == 'workflow_dispatch' && github.event.inputs.publish
         uses: actions/upload-artifact@v4
         with:
           name: digest-bouncmpe-${{ env.LABS344_VERSION }}-${{ env.PLATFORM }}
@@ -109,11 +105,7 @@ jobs:
     name: Merge container images
     runs-on: ubuntu-24.04
     needs: buildah-build
-    if: >
-      always() && (
-        github.ref == 'refs/heads/main' ||
-        (github.event_name == 'workflow_dispatch' && github.event.inputs.publish)
-      )
+    if: always() && github.ref == 'refs/heads/main' && github.event_name == 'workflow_dispatch' && github.event.inputs.publish
     steps:
       - name: Download digests
         uses: actions/download-artifact@v4
