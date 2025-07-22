@@ -4,6 +4,13 @@ ARG LABS344_RHEL_VERSION=9
 FROM ${LABS344_RHEL_BASE_IMAGE}:${LABS344_RHEL_VERSION} AS labs344-builder
 ARG TARGETARCH TARGETOS TARGETPLATFORM TARGETVARIANT
 
+RUN --mount=type=cache,target=/var/cache/dnf,sharing=locked,id=${TARGETPLATFORM}/var/cache/dnf \
+    dnf install -y git \
+    dnf install -y curl --allowerasing \
+      && \
+    dnf config-manager --enable crb && \
+    dnf clean dbcache
+
 RUN git clone --recurse-submodules https://github.com/openhwgroup/cvw /tmp/cvw && \
     cd /tmp/cvw && \
     git checkout main && \
