@@ -1,5 +1,9 @@
 name: Container Build (Toolchain)
 on:
+  push:
+    paths:
+      - 'containers/labs344-almalinux/**'
+      - '.github/workflows/almalinux-build-toolchain.yml'
   workflow_dispatch:
     inputs:
       publish:
@@ -10,7 +14,7 @@ on:
 
 env:
   REGISTRY: ghcr.io/bouncmpe
-  IMAGE_NAME: labs344
+  IMAGE_NAME: labs344-almalinux
   LABS344_VERSION: latest
   CONTAINERS_ROOT: /home/runner/.local/share/containers
   TMPDIR: /home/runner/.local/share/containers/tmp
@@ -80,7 +84,7 @@ jobs:
           extra-args: |
             --target labs344-toolchain
           containerfiles: |
-            containers/labs344/Dockerfile
+            containers/labs344-almalinux/Dockerfile
           context: containers
 
       - name: Push to GitHub Container Repository
@@ -107,7 +111,7 @@ jobs:
     name: Merge container images
     runs-on: ubuntu-24.04
     needs: buildah-build
-    if: always() && github.ref == 'refs/heads/main' && github.event_name == 'workflow_dispatch' && github.event.inputs.publish
+    if: always() && github.event_name == 'workflow_dispatch' && github.event.inputs.publish
     steps:
       - name: Download digests
         uses: actions/download-artifact@v4
