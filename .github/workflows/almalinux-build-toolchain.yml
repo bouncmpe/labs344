@@ -1,5 +1,9 @@
 name: Container Build (Toolchain)
 on:
+  push:
+    paths:
+      - 'containers/labs344-almalinux/**'
+      - '.github/workflows/almalinux-build-toolchain.yml'
   workflow_dispatch:
     inputs:
       publish:
