@@ -1,21 +1,26 @@
-// For format details, see https://aka.ms/devcontainer.json.
 {
-  "name": "labs344",
-  "context": "..",
-  "dockerFile": "../containers/labs344/Dockerfile",
+  "name": "Labs344",
+  "build": {
+    "context": "../containers",
+    "dockerfile": "../containers/labs344/Dockerfile",
+    "target": "labs344-devel"
+  },
+  "containerEnv": {
+    "DISPLAY": "${localEnv:DISPLAY}",
+    "XAUTHORITY": "/tmp/.Xauthority"
+  },
+  "runArgs": [
+    // "--device=/dev/dri", // Enable GPU acceleration
+    "--network=host",
+    "--security-opt=label:type:container_runtime_t"
+  ],
+  "mounts": [
+    "source=${localEnv:XAUTHORITY},target=/tmp/.Xauthority,type=bind,consistency=cached"
+  ],
   "customizations": {
     "vscode": {
-      "settings": {},
       "extensions": []
     }
   },
-  "initializeCommand": "xhost +local:",
-  "containerEnv": {
-    "DISPLAY": "${localEnv:DISPLAY}"
-  },
-  "runArgs": [
-    "--env=DISPLAY",
-    "--mount=type=bind,source=/tmp/.X11-unix,target=/tmp/.X11-unix,consistency=cached"
-  ],
-  "remoteUser": "bouncmpe"
+  // "remoteUser": "bouncmpe"
 }
