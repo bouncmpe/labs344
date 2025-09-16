@@ -1,5 +1,5 @@
 ARG LABS344_CONTAINER_VERSION=latest
-ARG LABS344_CONTAINER_BASE_IMAGE=docker.io/almalinux/9-base:9.6
+ARG LABS344_CONTAINER_BASE_IMAGE=docker.io/almalinux/10-base:10
 
 ARG LABS344_CONTAINER_BUILDER_IMAGE=labs344-builder
 ARG LABS344_CONTAINER_DEVEL_IMAGE=labs344-devel
@@ -12,7 +12,22 @@ ARG ELF2HEX_VERSION=f28a3103c06131ed3895052b1341daf4ca0b1c9c
 ARG SPIKE_VERSION=4c870d063dbbaeb4dc7007fe5c2a1bf8b00a767e
 ARG VERILATOR_VERSION=v5.036
 
-FROM ${LABS344_CONTAINER_BASE_IMAGE} as labs344-toolchain
+FROM ${LABS344_CONTAINER_BASE_IMAGE} as labs344-base
+ARG TARGETARCH TARGETOS TARGETPLATFORM TARGETVARIANT
+
+RUN dnf install -y dnf-plugins-core && \
+    dnf config-manager --set-enabled crb && \
+    dnf install -y epel-release && \
+    dnf clean all
+
+RUN dnf install -y \
+      dtc \
+      mold \
+      perl \
+      && \ 
+    dnf clean all
+
+FROM labs344-base as labs344-toolchain
 ARG TARGETARCH TARGETOS TARGETPLATFORM TARGETVARIANT
 
 ARG RISCV_GNU_TOOLCHAIN_VERSION
@@ -20,11 +35,7 @@ ENV RISCV_GNU_TOOLCHAIN_VERSION=${RISCV_GNU_TOOLCHAIN_VERSION}
 
 ARG RISCV_INSTALL_PREFIX
 ENV RISCV_INSTALL_PREFIX=${RISCV_INSTALL_PREFIX}
-
-RUN dnf install -y dnf-plugins-core && \
-    dnf config-manager --set-enabled crb && \
-    dnf install -y epel-release && \
-    dnf clean all
+ENV PATH="${RISCV_INSTALL_PREFIX}/bin:${PATH}"
 
 RUN dnf install -y \
       git \
@@ -42,6 +53,9 @@ RUN dnf install -y \
       patchutils \
       gcc \
       gcc-c++ \
+      cmake \
+      ninja-build \
+      ccache \
       zlib-devel \
       expat-devel \
       libslirp-devel \
@@ -74,17 +88,6 @@ RUN git clone  https://github.com/riscv/riscv-gnu-toolchain.git \
         "\
         && \
     make -j"$(nproc)"
-
-RUN dnf install -y \
-      dtc \
-      mold \
-      cmake \
-      ninja-build \
-      ccache \
-      && \ 
-    dnf clean all
-
-ENV PATH="${RISCV_INSTALL_PREFIX}/bin:${PATH}"
 
 RUN git clone https://github.com/sifive/elf2hex.git \
         --no-checkout \
@@ -123,11 +126,14 @@ RUN git clone https://github.com/verilator/verilator \
     cmake --build build -j"$(nproc)" && \
     cmake --install build
 
-FROM ${LABS344_CONTAINER_BASE_IMAGE} as labs344-builder
+FROM labs344-base as labs344-devel
 ARG TARGETARCH TARGETOS TARGETPLATFORM TARGETVARIANT
 
 ARG RISCV_INSTALL_PREFIX
 ENV RISCV_INSTALL_PREFIX=${RISCV_INSTALL_PREFIX}
+
+ARG WALLY_VERSION
+ENV WALLY_VERSION=${WALLY_VERSION}
 
 COPY --from=labs344-toolchain ${RISCV_INSTALL_PREFIX} ${RISCV_INSTALL_PREFIX}
 COPY --from=labs344-toolchain /usr/local /usr/local
@@ -143,58 +149,24 @@ ENV LABS344_PYTHON_EXECUTABLE=${LABS344_PYTHON_VENV_DIR}/bin/python
 ENV RISCV=${RISCV_INSTALL_PREFIX}
 ENV WALLY=${WALLY_SOURCE_DIR}
 
-RUN dnf install -y dnf-plugins-core && \
-    dnf config-manager --set-enabled crb && \
-    dnf install -y epel-release && \
-    dnf clean all
-
 RUN dnf install -y \
       git \
       wget \
       vim \
       emacs \
       nano \
-      z3 \
-      perl \
-      ccache \
       gtkwave \
       && \ 
     dnf clean all
 
-# RUN bash "${WALLY}/bin/wally-package-install.sh" --clean
-# RUN bash -c "\
-#       export CFLAGS='-g0 -DNDEBUG';\
-#       export CPPFLAGS='-g0 -DNDEBUG';\
-#       ${WALLY}/bin/installation/riscv-gnu-toolchain-install.sh --clean;\
-#     "
-# RUN bash -c "\
-#       source /opt/rh/gcc-toolset-13/enable;\
-#       export clean=true;\
-#       export CFLAGS='-g0 -DNDEBUG';\
-#       export CPPFLAGS='-g0 -DNDEBUG';\
-#       source ${WALLY}/bin/installation/elf2hex-install.sh;\
-#       source ${WALLY}/bin/installation/spike-install.sh;\
-#       source ${WALLY}/bin/installation/verilator-install.sh\
-#     "
+RUN git clone https://github.com/openhwgroup/cvw.git \
+        --no-checkout \
+        ${WALLY_SOURCE_DIR} \
+        &&\
+    cd ${WALLY_SOURCE_DIR} && \
+    git fetch --depth 1 origin ${WALLY_VERSION} && \
+    git checkout FETCH_HEAD && \
+    git submodule update --init --recursive
 
-# RUN git clone https://github.com/openhwgroup/cvw.git \
-#       --depth 1 \
-#       --single-branch \
-#       --branch ${WALLY_VERSION} \
-#     /workspaces/cvw
-
-ENV LABS344_CORE_DUMP_SIZE=300000
-ENV LABS344_PYTHON_VENV_DIR=${RISCV_INSTALL_PREFIX}/riscv-python
-ENV LABS344_PYTHON_EXECUTABLE=${LABS344_PYTHON_VENV_DIR}/bin/python
-
-ENV NO_AT_BRIDGE=1
 ENV PATH="${RISCV_INSTALL_PREFIX}/bin:${PATH}"
-
-FROM ${LABS344_CONTAINER_BUILDER_IMAGE} as labs344-devel
-ARG TARGETARCH TARGETOS TARGETPLATFORM TARGETVARIANT
-
-# RUN groupadd -g 1000 bouncmpe && \
-#     useradd -ms /bin/bash -g bouncmpe -u 1000 bouncmpe
-
-# USER bouncmpe
-# WORKDIR /home/bouncmpe
+ENV NO_AT_BRIDGE=1

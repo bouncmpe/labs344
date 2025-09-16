@@ -1,10 +1,6 @@
 {
   "name": "Labs344",
-  "build": {
-    "context": "../containers",
-    "dockerfile": "../containers/labs344/Dockerfile",
-    "target": "labs344-devel"
-  },
+  "image": "ghcr.io/bouncmpe/labs344:latest-devel",
   "containerEnv": {
     "DISPLAY": "${localEnv:DISPLAY}",
     "XAUTHORITY": "/tmp/.Xauthority"
@@ -21,6 +17,5 @@
     "vscode": {
       "extensions": []
     }
-  },
-  // "remoteUser": "bouncmpe"
+  }
 }
