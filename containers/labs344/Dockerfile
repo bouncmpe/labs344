@@ -87,7 +87,8 @@ RUN git clone  https://github.com/riscv/riscv-gnu-toolchain.git \
           rv64im-lp64--; \
         "\
         && \
-    make -j"$(nproc)"
+    make -j"$(nproc)" && \
+    rm -rf /tmp/riscv-gnu-toolchain
 
 RUN git clone https://github.com/sifive/elf2hex.git \
         --no-checkout \
@@ -99,7 +100,8 @@ RUN git clone https://github.com/sifive/elf2hex.git \
     export CPPFLAGS='-g0 -DNDEBUG' && \
     ./configure --prefix="/usr/local" && \
     make -j"$(nproc)" && \
-    make install
+    make install && \
+    rm -rf /tmp/elf2hex
 
 RUN git clone https://github.com/riscv-software-src/riscv-isa-sim \
         --no-checkout \
@@ -111,7 +113,8 @@ RUN git clone https://github.com/riscv-software-src/riscv-isa-sim \
     export CPPFLAGS='-g0 -DNDEBUG' && \
     ./configure --prefix="/usr/local" && \
     make -j"$(nproc)" && \
-    make install
+    make install && \
+    rm -rf /tmp/riscv-isa-sim
 
 RUN git clone https://github.com/verilator/verilator \
         --no-checkout \
@@ -124,7 +127,8 @@ RUN git clone https://github.com/verilator/verilator \
         -DCMAKE_BUILD_TYPE=Release \
         && \
     cmake --build build -j"$(nproc)" && \
-    cmake --install build
+    cmake --install build && \
+    rm -rf /tmp/verilator
 
 FROM labs344-base as labs344-devel
 ARG TARGETARCH TARGETOS TARGETPLATFORM TARGETVARIANT
