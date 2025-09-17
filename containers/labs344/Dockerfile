@@ -130,7 +130,7 @@ RUN git clone https://github.com/verilator/verilator \
     cmake --install build && \
     rm -rf /tmp/verilator
 
-FROM labs344-base as labs344-devel
+FROM labs344-base as labs344-runtime
 ARG TARGETARCH TARGETOS TARGETPLATFORM TARGETVARIANT
 
 ARG RISCV_INSTALL_PREFIX

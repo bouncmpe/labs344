@@ -71,32 +71,32 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Build devel container image
-        id: build-devel
+      - name: Build runtime container image
+        id: build-runtime
         uses: redhat-actions/buildah-build@v2
         with:
           context: .
           image: labs344
-          tags: ${{ env.CONTAINER_VERSION }}-devel ${{ env.CONTAINER_VERSION }}-devel-${{ env.HOSTARCH }}
+          tags: ${{ env.CONTAINER_VERSION }}-runtime ${{ env.CONTAINER_VERSION }}-runtime-${{ env.HOSTARCH }}
           layers: true
           oci: true
           build-args: |
             CONTAINER_VERSION=${{ env.CONTAINER_VERSION }}
             CONTAINER_IMAGE_REGISTRY_REMOTE=${{ env.REGISTRY }}
           extra-args: |
-            --target labs344-devel
+            --target labs344-runtime
           containerfiles: |
             ./containers/labs344/Dockerfile
 
       - name: Push to GitHub Container Repository
         if: github.event_name == 'workflow_dispatch' && github.event.inputs.publish
-        id: push-devel-ghcr
+        id: push-runtime-ghcr
         uses: redhat-actions/push-to-registry@v2
         with:
           registry: ${{ env.REGISTRY }}
-          image: ${{ steps.build-devel.outputs.image }}
-          tags: ${{ env.CONTAINER_VERSION }}-devel-${{ env.HOSTARCH }}
-          digestfile: ${{ runner.temp }}/digest-labs344-devel-${{ env.CONTAINER_VERSION }}-${{ env.PLATFORM }}
+          image: ${{ steps.build-runtime.outputs.image }}
+          tags: ${{ env.CONTAINER_VERSION }}-runtime-${{ env.HOSTARCH }}
+          digestfile: ${{ runner.temp }}/digest-labs344-runtime-${{ env.CONTAINER_VERSION }}-${{ env.PLATFORM }}
 
       - name: Upload digests
         if: github.event_name == 'workflow_dispatch' && github.event.inputs.publish
@@ -135,16 +135,17 @@ jobs:
           fi
           echo "CONTAINER_LATEST_VERSION=$(date +'%Y%m%d')" >> $GITHUB_ENV
 
-      - name: Create and push manifest list for labs344-devel
+      - name: Create and push manifest list for labs344-runtime
         run: |
-          MANIFEST=labs344-devel
+          MANIFEST=labs344-runtime
           FULL_IMAGE_NAME=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
           buildah manifest create $MANIFEST
-          for digest in ${{ runner.temp }}/digests/digest-labs344-devel-*; do
+          for digest in ${{ runner.temp }}/digests/digest-labs344-runtime-*; do
             echo "Adding $(cat $digest)"
             buildah manifest add $MANIFEST $FULL_IMAGE_NAME@$(cat $digest)
           done
-          buildah manifest push --all $MANIFEST docker://$FULL_IMAGE_NAME:${{ env.CONTAINER_VERSION }}-devel
+          buildah manifest push --all $MANIFEST docker://$FULL_IMAGE_NAME:${{ env.CONTAINER_VERSION }}-runtime
           if [ "${{ env.CONTAINER_VERSION }}" == "${{ env.CONTAINER_LATEST_VERSION }}" ]; then
-            buildah manifest push --all $MANIFEST docker://$FULL_IMAGE_NAME:latest-devel
+            buildah manifest push --all $MANIFEST docker://$FULL_IMAGE_NAME:latest
+            buildah manifest push --all $MANIFEST docker://$FULL_IMAGE_NAME:latest-runtime
           fi
