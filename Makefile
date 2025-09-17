@@ -1,29 +1,28 @@
-CONTEXT ?= .
+.PHONY: all clean run
 
-all: build
+TOOLCHAIN_PREFIX := riscv64-unknown-elf
+CC := $(TOOLCHAIN_PREFIX)-gcc
 
-toolchain:
-	podman build  \
-		-f containers/labs344/Dockerfile \
-		--tag bouncmpe/labs344:latest-toolchain \
-		--target labs344-toolchain
-	${CONTEXT}
+SRC_DIR := examples/fibonacci
+TARGET_DIR := target
 
-builder:
-	podman build  \
-		-f containers/labs344/Dockerfile \
-		--tag bouncmpe/labs344:latest-builder \
-		--target labs344-builder
-	${CONTEXT}
+SRC := $(wildcard $(SRC_DIR)/*.s $(SRC_DIR)/*.c)
+TARGET_NAME := main
 
-labs344:
-	podman build  \
-		-f containers/labs344/Dockerfile \
-		--tag bouncmpe/labs344:latest \
-		--target labs344
-	${CONTEXT}
-	
-run:
-	docker run --rm -it bouncmpe/labs344:latest
+RV_ARCH := rv64gc
+LD_FLAGS :=
+C_FLAGS := -Wall -Wextra -std=c11 -pedantic -O2 -ffreestanding -nostdlib \
+           -mcmodel=medany -march=$(RV_ARCH)
 
-.PHONY: all builder labs344 run
+
+all: $(TARGET_DIR)/$(TARGET_NAME)
+
+$(TARGET_DIR)/$(TARGET_NAME): $(SRC)
+	mkdir -p $(TARGET_DIR)
+	$(CC) $(C_FLAGS) $(LD_FLAGS) -o $@ $^
+
+clean:
+	rm -rf $(TARGET_DIR)
+
+run: all
+	spike $(TARGET_DIR)/$(TARGET_NAME)

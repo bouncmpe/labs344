@@ -1,17 +1,24 @@
-name: Container Build (Tools)
+name: Container Release
 on:
+  push:
+    paths:
+      - containers/labs344/**
+      - .github/workflows/container-release.yml # Self-trigger
   workflow_dispatch:
     inputs:
       publish:
-        description: "Publish to the registry"
-        required: true
-        default: true
+        description: "Publish to the container registry"
+        required: false
+        default: false
         type: boolean
 
 env:
-  REGISTRY: ghcr.io/bouncmpe
+  REGISTRY: ghcr.io/${{ github.repository_owner }}
   IMAGE_NAME: labs344
-  LABS344_VERSION: latest
+  HOSTARCH: amd64
+  PLATFORM: linux-amd64
+  CONTAINER_VERSION: latest
+  CONTAINER_LATEST_VERSION: latest
   CONTAINERS_ROOT: /home/runner/.local/share/containers
   TMPDIR: /home/runner/.local/share/containers/tmp
 
@@ -21,6 +28,7 @@ permissions:
 
 jobs:
   buildah-build:
+    name: Build container images
     strategy:
       fail-fast: false
       matrix:
@@ -29,7 +37,7 @@ jobs:
     concurrency:
       group: ${{ github.workflow }}-${{ github.ref }}-${{ matrix.os }}
       cancel-in-progress: true
-      
+
     steps:
       - name: Install container tools
         run: sudo apt-get install podman buildah jq
@@ -44,17 +52,17 @@ jobs:
           remove-codeql: "true"
           remove-docker-images: "true"
           build-mount-path: ${{ env.CONTAINERS_ROOT }} # The remaining space only for container build
-
+          
       - run: mkdir -p $TMPDIR
-
-      - name: Checkout repository
-        uses: actions/checkout@v4
 
       - name: Prepare environment variables
         run: |
           echo "HOSTARCH=$(podman info --format='{{.Host.Arch}}')" >> $GITHUB_ENV
           echo "PLATFORM=$(podman info --format='{{.Version.OsArch}}' | sed 's/\//-/g')" >> $GITHUB_ENV
-          echo "LABS344_VERSION=$(date +'%Y%m%d')" >> $GITHUB_ENV
+          echo "CONTAINER_VERSION=$(date +'%Y%m%d')" >> $GITHUB_ENV
+
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
       - name: Log in to the GitHub Container registry
         uses: redhat-actions/podman-login@v1
@@ -63,39 +71,38 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Build tools container image
-        id: build-tools
+      - name: Build runtime container image
+        id: build-runtime
         uses: redhat-actions/buildah-build@v2
         with:
-          image: ${{ env.IMAGE_NAME }}
-          tags: |
-            ${{ env.LABS344_VERSION }}-tools
-            ${{ env.LABS344_VERSION }}-tools-${{ env.HOSTARCH }}
+          context: .
+          image: labs344
+          tags: ${{ env.CONTAINER_VERSION }}-runtime ${{ env.CONTAINER_VERSION }}-runtime-${{ env.HOSTARCH }}
           layers: true
           oci: true
           build-args: |
-            LABS344_VERSION=${{ env.LABS344_VERSION }}
+            CONTAINER_VERSION=${{ env.CONTAINER_VERSION }}
+            CONTAINER_IMAGE_REGISTRY_REMOTE=${{ env.REGISTRY }}
           extra-args: |
-            --target labs344-tools
+            --target labs344-runtime
           containerfiles: |
-            containers/labs344/Dockerfile
-          context: containers
+            ./containers/labs344/Dockerfile
 
       - name: Push to GitHub Container Repository
-        if: github.ref == 'refs/heads/main' && github.event_name == 'workflow_dispatch' && github.event.inputs.publish
-        id: push-tools-ghcr
+        if: github.event_name == 'workflow_dispatch' && github.event.inputs.publish
+        id: push-runtime-ghcr
         uses: redhat-actions/push-to-registry@v2
         with:
           registry: ${{ env.REGISTRY }}
-          image: ${{ steps.build-tools.outputs.image }}
-          tags: ${{ env.LABS344_VERSION }}-tools-${{ env.HOSTARCH }}
-          digestfile: ${{ runner.temp }}/digest-labs344-tools-${{ env.LABS344_VERSION }}-${{ env.PLATFORM }}
+          image: ${{ steps.build-runtime.outputs.image }}
+          tags: ${{ env.CONTAINER_VERSION }}-runtime-${{ env.HOSTARCH }}
+          digestfile: ${{ runner.temp }}/digest-labs344-runtime-${{ env.CONTAINER_VERSION }}-${{ env.PLATFORM }}
 
       - name: Upload digests
-        if: github.ref == 'refs/heads/main' && github.event_name == 'workflow_dispatch' && github.event.inputs.publish
+        if: github.event_name == 'workflow_dispatch' && github.event.inputs.publish
         uses: actions/upload-artifact@v4
         with:
-          name: digest-bouncmpe-${{ env.LABS344_VERSION }}-${{ env.PLATFORM }}
+          name: digest-labs344-${{ env.CONTAINER_VERSION }}-${{ env.PLATFORM }}
           path: ${{ runner.temp }}/digest-*
           if-no-files-found: error
           retention-days: 1
@@ -105,7 +112,7 @@ jobs:
     name: Merge container images
     runs-on: ubuntu-24.04
     needs: buildah-build
-    if: always() && github.ref == 'refs/heads/main' && github.event_name == 'workflow_dispatch' && github.event.inputs.publish
+    if: always() && github.event_name == 'workflow_dispatch' && github.event.inputs.publish
     steps:
       - name: Download digests
         uses: actions/download-artifact@v4
@@ -114,10 +121,6 @@ jobs:
           pattern: digest-*
           merge-multiple: true
 
-      - name: Prepare environment variables
-        run: |
-          echo "LABS344_VERSION=$(date +'%Y%m%d')" >> $GITHUB_ENV
-
       - name: Log in to the GitHub Container registry
         uses: redhat-actions/podman-login@v1
         with:
@@ -125,14 +128,24 @@ jobs:
           username: ${{ github.repository_owner }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Create and push manifest list for labs344-tools
+      - name: Prepare environment variables
         run: |
-          MANIFEST=labs344-tools
+          if [ "${{ env.CONTAINER_VERSION }}" == "latest" ]; then
+            echo "CONTAINER_VERSION=$(date +'%Y%m%d')" >> $GITHUB_ENV
+          fi
+          echo "CONTAINER_LATEST_VERSION=$(date +'%Y%m%d')" >> $GITHUB_ENV
+
+      - name: Create and push manifest list for labs344-runtime
+        run: |
+          MANIFEST=labs344-runtime
           FULL_IMAGE_NAME=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
           buildah manifest create $MANIFEST
-          for digest in ${{ runner.temp }}/digests/digest-labs344-tools-*; do
+          for digest in ${{ runner.temp }}/digests/digest-labs344-runtime-*; do
             echo "Adding $(cat $digest)"
             buildah manifest add $MANIFEST $FULL_IMAGE_NAME@$(cat $digest)
           done
-          buildah manifest push --all $MANIFEST docker://$FULL_IMAGE_NAME:${{ env.LABS344_VERSION }}-tools
-          buildah manifest push --all $MANIFEST docker://$FULL_IMAGE_NAME:latest-tools
+          buildah manifest push --all $MANIFEST docker://$FULL_IMAGE_NAME:${{ env.CONTAINER_VERSION }}-runtime
+          if [ "${{ env.CONTAINER_VERSION }}" == "${{ env.CONTAINER_LATEST_VERSION }}" ]; then
+            buildah manifest push --all $MANIFEST docker://$FULL_IMAGE_NAME:latest
+            buildah manifest push --all $MANIFEST docker://$FULL_IMAGE_NAME:latest-runtime
+          fi

@@ -1,195 +1,176 @@
-ARG LABS344_VERSION=latest
-ARG LABS344_DEBIAN_VERSION=12
-ARG LABS344_IMAGE_REGISTRY=localhost
-ARG LABS344_IMAGE_REGISTRY_REMOTE=${LABS344_IMAGE_REGISTRY}
-ARG LABS344_IMAGE_NAME=labs344
-ARG LABS344_IMAGE_NAME_FULL=${LABS344_IMAGE_REGISTRY}/${LABS344_IMAGE_NAME}
-ARG LABS344_IMAGE_VERSION=${LABS344_VERSION}
-ARG LABS344_BUILDER_IMAGE=${LABS344_IMAGE_NAME_FULL}:${LABS344_IMAGE_VERSION}-builder
-ARG LABS344_TOOLCHAIN_IMAGE=${LABS344_IMAGE_NAME_FULL}:${LABS344_IMAGE_VERSION}-toolchain
-ARG LABS344_TOOLS_IMAGE=${LABS344_IMAGE_NAME_FULL}:${LABS344_IMAGE_VERSION}-tools
+ARG LABS344_CONTAINER_VERSION=latest
+ARG LABS344_CONTAINER_BASE_IMAGE=docker.io/almalinux/10-base:10
 
-ARG LABS344_RISCV_GNU_TOOLCHAIN_VERSION=23863c2ca74e6c050f0c97e7af61f5f1776aadd1
+ARG LABS344_CONTAINER_BUILDER_IMAGE=labs344-builder
+ARG LABS344_CONTAINER_DEVEL_IMAGE=labs344-devel
 
-FROM docker.io/library/debian:${LABS344_DEBIAN_VERSION} AS labs344-toolchain
+ARG RISCV_GNU_TOOLCHAIN_VERSION=23863c2ca74e6c050f0c97e7af61f5f1776aadd1
+ARG RISCV_INSTALL_PREFIX=/opt/riscv
+
+ARG WALLY_VERSION=407c74799bce0968b21551eba72864c2c6ead987
+ARG ELF2HEX_VERSION=f28a3103c06131ed3895052b1341daf4ca0b1c9c
+ARG SPIKE_VERSION=4c870d063dbbaeb4dc7007fe5c2a1bf8b00a767e
+ARG VERILATOR_VERSION=v5.036
+
+FROM ${LABS344_CONTAINER_BASE_IMAGE} as labs344-base
 ARG TARGETARCH TARGETOS TARGETPLATFORM TARGETVARIANT
 
-RUN --mount=type=cache,target=/var/cache/apt,sharing=locked,id=${TARGETPLATFORM}/var/cache/apt \
-    export DEBIAN_FRONTEND=noninteractive && \
-    apt-get update -qq && \
-    apt-get install -qy --no-install-recommends \
+RUN dnf install -y dnf-plugins-core && \
+    dnf config-manager --set-enabled crb && \
+    dnf install -y epel-release && \
+    dnf clean all
+
+RUN dnf install -y \
+      dtc \
+      mold \
+      perl \
+      && \ 
+    dnf clean all
+
+FROM labs344-base as labs344-toolchain
+ARG TARGETARCH TARGETOS TARGETPLATFORM TARGETVARIANT
+
+ARG RISCV_GNU_TOOLCHAIN_VERSION
+ENV RISCV_GNU_TOOLCHAIN_VERSION=${RISCV_GNU_TOOLCHAIN_VERSION}
+
+ARG RISCV_INSTALL_PREFIX
+ENV RISCV_INSTALL_PREFIX=${RISCV_INSTALL_PREFIX}
+ENV PATH="${RISCV_INSTALL_PREFIX}/bin:${PATH}"
+
+RUN dnf install -y \
+      git \
       autoconf \
       automake \
-      autotools-dev \
-      curl \
       python3 \
-      python3-pip \
-      python3-tomli \
-      libmpc-dev \
-      libmpfr-dev \
-      libgmp-dev \
-      gawk \
-      build-essential \
+      libmpc-devel \
+      mpfr-devel \
+      gmp-devel \
+      gawk  \
       bison \
       flex \
       texinfo \
-      gperf \
-      libtool \
+      diffutils \
       patchutils \
-      bc \
-      zlib1g-dev \
-      libexpat-dev \
-      ninja-build \
-      git \
+      gcc \
+      gcc-c++ \
       cmake \
-      libglib2.0-dev \
-      libslirp-dev \
-      && \
-    apt-get autoremove -y && rm -rf /var/lib/apt/lists/*
+      ninja-build \
+      ccache \
+      zlib-devel \
+      expat-devel \
+      libslirp-devel \
+    && dnf clean all
 
-ARG LABS344_RISCV_GNU_TOOLCHAIN_VERSION
-ENV LABS344_RISCV_GNU_TOOLCHAIN_VERSION=${LABS344_RISCV_GNU_TOOLCHAIN_VERSION}
-ENV LABS344_RISCV_DIR=/opt/riscv
-ENV PATH=${LABS344_RISCV_DIR}/riscv-gnu-toolchain/bin:$PATH
-
-RUN git clone https://github.com/riscv/riscv-gnu-toolchain /tmp/riscv-gnu-toolchain && \
+RUN git clone  https://github.com/riscv/riscv-gnu-toolchain.git \
+        --no-checkout \
+        /tmp/riscv-gnu-toolchain \
+        &&\
     cd /tmp/riscv-gnu-toolchain && \
-    ./configure --prefix=${LABS344_RISCV_DIR} --enable-multilib --with-multilib-generator="rv32e-ilp32e--;rv32i-ilp32--;rv32im-ilp32--;rv32iac-ilp32--;rv32imac-ilp32--;rv32imafc-ilp32f--;rv32imafdc-ilp32d--;rv64i-lp64--;rv64ic-lp64--;rv64iac-lp64--;rv64imac-lp64--;rv64imafdc-lp64d--;rv64im-lp64--;" && \
-    make -j$(nproc) && \
-    make install && \
+    git checkout ${RISCV_GNU_TOOLCHAIN_VERSION} && \
+    export CFLAGS='-g0 -DNDEBUG' && \
+    export CPPFLAGS='-g0 -DNDEBUG' && \
+    ./configure \
+        --prefix="${RISCV_INSTALL_PREFIX}" \
+        --with-multilib-generator="\
+          rv32e-ilp32e--; \
+          rv32i-ilp32--; \
+          rv32im-ilp32--; \
+          rv32iac-ilp32--; \
+          rv32imac-ilp32--; \
+          rv32imafc-ilp32f--; \
+          rv32imafdc-ilp32d--; \
+          rv64i-lp64--; \
+          rv64ic-lp64--; \
+          rv64iac-lp64--; \
+          rv64imac-lp64--; \
+          rv64imafdc-lp64d--; \
+          rv64im-lp64--; \
+        "\
+        && \
+    make -j"$(nproc)" && \
     rm -rf /tmp/riscv-gnu-toolchain
 
-FROM ${LABS344_TOOLCHAIN_IMAGE} AS labs344-tools
-ARG TARGETARCH TARGETOS TARGETPLATFORM TARGETVARIANT
-
-RUN git clone https://github.com/sifive/elf2hex.git /tmp/elf2hex && \
+RUN git clone https://github.com/sifive/elf2hex.git \
+        --no-checkout \
+        /tmp/elf2hex \
+        &&\
     cd /tmp/elf2hex && \
-    autoreconf -i && \
-    ./configure --target=riscv64-unknown-elf --prefix=${LABS344_RISCV_DIR} && \
-    make -j$(nproc) && \
+    git checkout ${ELF2HEX_VERSION} && \
+    export CFLAGS='-g0 -DNDEBUG' && \
+    export CPPFLAGS='-g0 -DNDEBUG' && \
+    ./configure --prefix="/usr/local" && \
+    make -j"$(nproc)" && \
     make install && \
     rm -rf /tmp/elf2hex
 
-RUN git clone https://github.com/riscv-software-src/riscv-isa-sim /tmp/riscv-isa-sim && \
-    mkdir -p /tmp/riscv-isa-sim/build && \
-    cd /tmp/riscv-isa-sim/build && \
-    ../configure --prefix=${LABS344_RISCV_DIR} && \
-    make -j$(nproc) && \
+RUN git clone https://github.com/riscv-software-src/riscv-isa-sim \
+        --no-checkout \
+        /tmp/riscv-isa-sim \
+        &&\
+    cd /tmp/riscv-isa-sim && \
+    git checkout ${RISCV_ISA_SIM_VERSION} && \
+    export CFLAGS='-g0 -DNDEBUG' && \
+    export CPPFLAGS='-g0 -DNDEBUG' && \
+    ./configure --prefix="/usr/local" && \
+    make -j"$(nproc)" && \
     make install && \
-    && rm -rf /tmp/riscv-isa-sim
+    rm -rf /tmp/riscv-isa-sim
 
-FROM docker.io/library/debian:${LABS344_DEBIAN_VERSION} AS labs344
+RUN git clone https://github.com/verilator/verilator \
+        --no-checkout \
+        /tmp/verilator \
+        &&\
+    cd /tmp/verilator && \
+    git checkout ${VERILATOR_VERSION} && \ 
+    cmake -S . -B build -G Ninja \
+        -DCMAKE_INSTALL_PREFIX=/usr/local \
+        -DCMAKE_BUILD_TYPE=Release \
+        && \
+    cmake --build build -j"$(nproc)" && \
+    cmake --install build && \
+    rm -rf /tmp/verilator
+
+FROM labs344-base as labs344-runtime
 ARG TARGETARCH TARGETOS TARGETPLATFORM TARGETVARIANT
 
-COPY --from=labs344-tools /opt/riscv /opt/riscv
+ARG RISCV_INSTALL_PREFIX
+ENV RISCV_INSTALL_PREFIX=${RISCV_INSTALL_PREFIX}
 
-RUN --mount=type=cache,target=/var/cache/apt,sharing=locked,id=${TARGETPLATFORM}/var/cache/apt \
-    apt-get update && export DEBIAN_FRONTEND=noninteractive \
-    && apt-get install -qqy --no-install-recommends \
-        curl \
-        wget \
-        git \
-        gnupg2 \
-        ca-certificates \
-        build-essential \
-        make \
-        cmake \
-        ninja-build \
-        python3-minimal \
-        python3-pip \
-    && apt-get autoremove -y && apt-get clean -y && rm -rf /var/lib/apt/lists/* 
+ARG WALLY_VERSION
+ENV WALLY_VERSION=${WALLY_VERSION}
 
-FROM ${LABS344_BUILDER_IMAGE} AS labs344-devel
-ARG TARGETARCH TARGETOS TARGETPLATFORM TARGETVARIANT
+COPY --from=labs344-toolchain ${RISCV_INSTALL_PREFIX} ${RISCV_INSTALL_PREFIX}
+COPY --from=labs344-toolchain /usr/local /usr/local
 
-RUN git clone https://github.com/openhwgroup/cvw && \
-    cd cvw && \
-    git checkout main && \
-    git submodule update --init --recursive && \
-    export WALLY=$(pwd) && \
-    export RISCV=/opt/riscv && \
-    export PYTHON_VERSION=python3.11 && \
-    bash -c ". $WALLY/bin/wally-environment-check.sh" && \
-    bash -c ". $WALLY/bin/wally-package-install.sh" && \
-    bash -c ". $WALLY/bin/installation/python-setup.sh" && \
-    bash -c ". $WALLY/bin/installation/activate-tools.sh" && \
-    # bash -c ". $WALLY/bin/installation/riscv-gnu-toolchain-install.sh" && \
-    bash -c ". $WALLY/bin/installation/elf2hex-install.sh" && \
-    bash -c ". $WALLY/bin/installation/qemu-install.sh" && \
-    bash -c ". $WALLY/bin/installation/spike-install.sh" && \
-    # bash -c ". $WALLY/bin/installation/sail-install.sh" && \
-    bash -c ". $WALLY/bin/installation/verilator-install.sh" && \
-    cd .. && rm -rf cvw
+ENV WALLY_SOURCE_DIR=/opt/openhwgroup/cvw
 
+ENV LABS344_HOME=/root
+ENV LABS344_SOURCE_DIR=/workspaces/labs344
+ENV LABS344_PYTHON_VENV_DIR=${LABS344_HOME}/.venv/labs344
+ENV LABS344_PYTHON_EXECUTABLE=${LABS344_PYTHON_VENV_DIR}/bin/python
 
-# FROM docker.io/verilator/verilator:v5.028 AS labs344
-# ARG TARGETARCH TARGETOS TARGETPLATFORM TARGETVARIANT
+# Aliases used in Wally scripts
+ENV RISCV=${RISCV_INSTALL_PREFIX}
+ENV WALLY=${WALLY_SOURCE_DIR}
 
-# # hadolint ignore=DL3008
-# RUN --mount=type=cache,target=/var/cache/apt,sharing=locked,id=${TARGETPLATFORM}/var/cache/apt \
-#     export DEBIAN_FRONTEND=noninteractive && \
-#     apt-get update -qq && \
-#     apt-get install -qqy --no-install-recommends \
-#         sudo \
-#         git \
-#         wget \
-#         gnupg2 \
-#         ca-certificates \
-#         openssh-client \
-#     && apt-get autoremove -y && rm -rf /var/lib/apt/lists/*
+RUN dnf install -y \
+      git \
+      wget \
+      vim \
+      emacs \
+      nano \
+      gtkwave \
+      && \ 
+    dnf clean all
 
-# # hadolint ignore=DL3008
-# RUN --mount=type=cache,target=/var/cache/apt,sharing=locked,id=${TARGETPLATFORM}/var/cache/apt \
-#     export DEBIAN_FRONTEND=noninteractive && \
-#     apt-get update -qq && \
-#     apt-get install -qqy --no-install-recommends \
-#         gcc-riscv64-unknown-elf \
-#         binutils-riscv64-unknown-elf \
-#     && apt-get autoremove -y && rm -rf /var/lib/apt/lists/*
+RUN git clone https://github.com/openhwgroup/cvw.git \
+        --no-checkout \
+        ${WALLY_SOURCE_DIR} \
+        &&\
+    cd ${WALLY_SOURCE_DIR} && \
+    git fetch --depth 1 origin ${WALLY_VERSION} && \
+    git checkout FETCH_HEAD && \
+    git submodule update --init --recursive
 
-# COPY --from=whisper-builder /opt/VeeR-ISS/whisper /usr/local/bin/whisper
-
-# # hadolint ignore=DL3008
-# RUN --mount=type=cache,target=/var/cache/apt,sharing=locked,id=${TARGETPLATFORM}/var/cache/apt \
-#     export DEBIAN_FRONTEND=noninteractive && \
-#     apt-get update -qq && \
-#     apt-get install -qqy --no-install-recommends \
-#         make \
-#         ninja-build \
-#         libjson-perl \
-#         libbit-vector-perl \
-#         python3-minimal \
-#         python3-pip \
-#     && apt-get autoremove -y && rm -rf /var/lib/apt/lists/*
-
-# RUN --mount=type=cache,target=/var/cache/apt,sharing=locked,id=${TARGETPLATFORM}/var/cache/apt \
-#     export DEBIAN_FRONTEND=noninteractive && \
-#     apt-get update -qq && \
-#     apt-get install -qqy --no-install-recommends \
-#         gtkwave \
-#         dbus-x11 \
-#         libgtk-3-0 \
-#         pop-gtk-theme \
-#     && apt-get autoremove -y && rm -rf /var/lib/apt/lists/*
-
-# RUN groupadd bouncmpe -g 1000 && \
-#     useradd -ms /bin/bash bouncmpe -g bouncmpe -u 1000 && \
-#     printf "bouncmpe ALL= NOPASSWD: ALL\\n" >> /etc/sudoers
-
-# ENV LC_ALL=C.UTF-8
-# ENV LANG=C.UTF-8
-# ENV LANGUAGE=C.UTF-8
-# ENV GTK_THEME=Pop
-
-# USER bouncmpe
-# WORKDIR /home/bouncmpe
-
-# # hadolint ignore=DL3013
-# RUN python3 -m pip install --no-cache-dir --user meson numpy pandas matplotlib
-
-# RUN git clone --depth=1 --recurse-submodules --shallow-submodules \
-#         https://github.com/chipsalliance/Cores-VeeR-EL2.git /home/bouncmpe/cores/VeerEL2 &&\
-#     git clone --depth=1 --recurse-submodules --shallow-submodules \
-#         https://github.com/chipsalliance/Cores-VeeR-EH1.git /home/bouncmpe/cores/VeerEH1
-
-# ENTRYPOINT ["/bin/bash"]
+ENV PATH="${RISCV_INSTALL_PREFIX}/bin:${PATH}"
+ENV NO_AT_BRIDGE=1
