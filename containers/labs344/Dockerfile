@@ -98,7 +98,8 @@ RUN git clone https://github.com/sifive/elf2hex.git \
     git checkout ${ELF2HEX_VERSION} && \
     export CFLAGS='-g0 -DNDEBUG' && \
     export CPPFLAGS='-g0 -DNDEBUG' && \
-    ./configure --prefix="/usr/local" && \
+    autoreconf -i && \
+    ./configure --target=riscv64-unknown-elf --prefix="/usr/local" && \
     make -j"$(nproc)" && \
     make install && \
     rm -rf /tmp/elf2hex
@@ -116,19 +117,31 @@ RUN git clone https://github.com/riscv-software-src/riscv-isa-sim \
     make install && \
     rm -rf /tmp/riscv-isa-sim
 
-RUN git clone https://github.com/verilator/verilator \
-        --no-checkout \
-        /tmp/verilator \
-        &&\
-    cd /tmp/verilator && \
-    git checkout ${VERILATOR_VERSION} && \ 
-    cmake -S . -B build -G Ninja \
-        -DCMAKE_INSTALL_PREFIX=/usr/local \
-        -DCMAKE_BUILD_TYPE=Release \
-        && \
-    cmake --build build -j"$(nproc)" && \
-    cmake --install build && \
-    rm -rf /tmp/verilator
+# RUN git clone https://github.com/verilator/verilator \
+#         --no-checkout \
+#         /tmp/verilator \
+#         &&\
+#     cd /tmp/verilator && \
+#     git checkout ${VERILATOR_VERSION} && \ 
+#     cmake -S . -B build -G Ninja \
+#         -DCMAKE_INSTALL_PREFIX=/usr/local \
+#         -DCMAKE_BUILD_TYPE=Release \
+#         && \
+#     cmake --build build -j"$(nproc)" && \
+#     cmake --install build && \
+#     rm -rf /tmp/verilator
+
+# RUN git clone "https://github.com/verilator/verilator" \
+#         --no-checkout \
+#         /tmp/verilator \
+#         &&\
+#     cd /tmp/verilator && \
+#     git checkout ${VERILATOR_VERSION} && \ 
+#     autoconf && \ 
+#     ./configure --prefix="/usr/local" && \ 
+#     make -j "$(nproc)" && \ 
+#     make install && \ 
+#     rm -rf /tmp/verilator
 
 FROM labs344-base as labs344-runtime
 ARG TARGETARCH TARGETOS TARGETPLATFORM TARGETVARIANT
@@ -160,6 +173,7 @@ RUN dnf install -y \
       emacs \
       nano \
       gtkwave \
+      verilator-devel \
       && \ 
     dnf clean all
 

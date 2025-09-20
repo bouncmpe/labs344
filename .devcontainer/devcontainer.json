@@ -1,7 +1,8 @@
 {
   "name": "Labs344",
-  "image": "ghcr.io/bouncmpe/labs344:latest-devel",
+  "image": "ghcr.io/bouncmpe/labs344:latest",
   "containerEnv": {
+    "WALLY": "/opt/openhwgroup/cvw",
     "DISPLAY": "${localEnv:DISPLAY}",
     "XAUTHORITY": "/tmp/.Xauthority"
   },
