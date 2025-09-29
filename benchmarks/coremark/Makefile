@@ -1,26 +1,29 @@
 # Wally Coremark Makefile
-# Daniel Torres & David Harris 28 July 2022
-# Dogan Ulus 2025
+# SPDX-FileCopyrightText: 2022 Daniel Torres, David Harris
+# SPDX-FileCopyrightText: 2025 Dogan Ulus
 # SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
 
-WALLY ?= /opt/openhwgroup/cvw
-LABS344 ?= /workspaces/labs344
+.PHONY: clean
 
-PORT_DIR = ${WALLY}/benchmarks/coremark/riscv64-baremetal
-cmbase= ${WALLY}/addins/coremark
-work_dir= ${LABS344}/benchmarks/coremark/work
-XLEN ?=32
-sources=$(cmbase)/core_main.c $(cmbase)/core_list_join.c $(cmbase)/coremark.h  \
-	$(cmbase)/core_matrix.c $(cmbase)/core_state.c $(cmbase)/core_util.c \
-	$(PORT_DIR)/core_portme.h $(PORT_DIR)/core_portme.c $(PORT_DIR)/core_portme.mak \
-	$(PORT_DIR)/crt.S $(PORT_DIR)/encoding.h $(PORT_DIR)/util.h $(PORT_DIR)/syscalls.c
-ABI := $(if $(findstring "64","$(XLEN)"),lp64,ilp32)
-ARCH := rv$(XLEN)im_zicsr_zba_zbb_zbs
+WALLY ?= /opt/openhwgroup/cvw
+LABS344_DIR ?= /workspaces/labs344
+
+COREMARK_BASEDIR = ${WALLY}/addins/coremark
+COREMARK_PORTDIR = ${WALLY}/benchmarks/coremark/riscv64-baremetal
+COREMARK_TMPDIR  = ${LABS344_DIR}/benchmarks/coremark/work
+
+CC = riscv64-unknown-elf-gcc
+LD = riscv64-unknown-elf-ld
+
+ARCH   := rv32gc
+XLEN   := $(if $(findstring 32,$(ARCH)),32,64)
+ABI    := $(if $(findstring 64,$(XLEN)),lp64,ilp32)
 CONFIG := rv$(XLEN)gc
-#ARCH := rv$(XLEN)gc
-#ARCH := rv$(XLEN)imc_zicsr
-#ARCH := rv$(XLEN)im_zicsr
-#ARCH := rv$(XLEN)i_zicsr
+
+sources=$(COREMARK_BASEDIR)/core_main.c $(COREMARK_BASEDIR)/core_list_join.c $(COREMARK_BASEDIR)/coremark.h  \
+	$(COREMARK_BASEDIR)/core_matrix.c $(COREMARK_BASEDIR)/core_state.c $(COREMARK_BASEDIR)/core_util.c \
+	$(COREMARK_PORTDIR)/core_portme.h $(COREMARK_PORTDIR)/core_portme.c $(COREMARK_PORTDIR)/core_portme.mak \
+	$(COREMARK_PORTDIR)/crt.S $(COREMARK_PORTDIR)/encoding.h $(COREMARK_PORTDIR)/util.h $(COREMARK_PORTDIR)/syscalls.c
 
 PORT_CFLAGS = -g -mabi=$(ABI) -march=$(ARCH) -static -falign-functions=16 \
 	-mbranch-cost=1 -DSKIP_DEFAULT_MEMSET -mtune=sifive-3-series -O3 -finline-functions -falign-jumps=4 \
@@ -29,26 +32,22 @@ PORT_CFLAGS = -g -mabi=$(ABI) -march=$(ARCH) -static -falign-functions=16 \
 	-nostdlib -nostartfiles -ffreestanding -mstrict-align \
 	-DTOTAL_DATA_SIZE=2000 -DMAIN_HAS_NOARGC=1 -DPERFORMANCE_RUN=1 -DITERATIONS=10 -DXLEN=$(XLEN) 
 
-all: $(work_dir)/coremark.bare.riscv.elf.memfile
+all: $(COREMARK_TMPDIR)/coremark.bare.riscv.elf.memfile
 
-run: $(work_dir)/coremark.bare.riscv.elf.memfile
-# 	python3 ${LABS344}/bin/wsim --sim verilator ${CONFIG} coremark 2>&1 | tee $(work_dir)/coremark.sim.log
-	make -C ${LABS344}/sim/verilator WALLYCONF=${CONFIG} TEST=coremark TESTBENCH=testbench 
+run: $(COREMARK_TMPDIR)/coremark.bare.riscv.elf.memfile
+	make -C ${LABS344_DIR}/sim/verilator WALLYCONF=${CONFIG} TEST=coremark TESTBENCH=testbench 
 
-$(work_dir)/coremark.bare.riscv.elf.memfile: $(work_dir)/coremark.bare.riscv
+$(COREMARK_TMPDIR)/coremark.bare.riscv.elf.memfile: $(COREMARK_TMPDIR)/coremark.bare.riscv
 	riscv64-unknown-elf-objdump -D $< > $<.elf.objdump
 	riscv64-unknown-elf-elf2hex --bit-width $(XLEN) --input $< --output $@
 	${WALLY}/bin/extractFunctionRadix.sh $<.elf.objdump
 
-$(work_dir)/coremark.bare.riscv: $(sources) Makefile
-	$(MAKE) -C $(cmbase) PORT_DIR=$(PORT_DIR) compile RISCV=$(RISCV) XCFLAGS="$(PORT_CFLAGS)"
-	mkdir -p $(work_dir)
-	mv $(cmbase)/coremark.bare.riscv $(work_dir)
-
-.PHONY: clean
+$(COREMARK_TMPDIR)/coremark.bare.riscv: $(sources) Makefile
+	$(MAKE) -C $(COREMARK_BASEDIR) PORT_DIR=$(COREMARK_PORTDIR) compile RISCV=$(RISCV) XCFLAGS="$(PORT_CFLAGS)"
+	mkdir -p $(COREMARK_TMPDIR)
+	mv $(COREMARK_BASEDIR)/coremark.bare.riscv $(COREMARK_TMPDIR)
 
 clean:
-	$(MAKE) -C $(cmbase) clean
-	rm -f $(work_dir)/*
-
-
+	rm -rf $(COREMARK_TMPDIR)
+	$(MAKE) -C $(COREMARK_BASEDIR) clean
+	$(MAKE) -C ${LABS344_DIR}/sim/verilator clean

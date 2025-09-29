@@ -30,10 +30,10 @@ The `fibonacci.elf` is a binary executable in the ELF format, containing the RIS
 Disassembling the ELF file means we convert the binary file `fibonacci.elf` in a human-readable textual file. We can disassemble ELF objects and executable using the program `objdump` as follows:
 
 ```bash
-riscv64-unknown-elf-objdump --disassemble fibonacci.elf > fibonacci.txt
+riscv64-unknown-elf-objdump --disassemble fibonacci.elf > fibonacci.objdump
 ```
 
-Now check out the contents of `fibonacci.txt`, which is a plain text file, in your text editor. It should look like this:
+Now check out the contents of `fibonacci.objdump`, which is a plain text file, in your text editor. It should look like this:
 
 ```
 fibonacci.elf:     file format elf32-littleriscv
@@ -64,7 +64,34 @@ Disassembly of section .text:
    100d4:	0000006f          	j	100d4 <DONE>
 ```
 
-The `fibonacci.txt` file is a disassembled version of our assembled code. It provides a more detailed view of the instructions and data, including the assigned memory addresses and the substitution of pseudo-instructions with their corresponding RISC-V machine code. These changes are performed by the assembler during the compilation process.
+The `fibonacci.objdump` file is a disassembled version of our assembled code. It provides a more detailed view of the instructions and data, including the assigned memory addresses and the substitution of pseudo-instructions with their corresponding RISC-V machine code. These changes are performed by the assembler during the compilation process.
+
+## Simulate using Spike
+
+Our desktop computers typically use `x86_64` processors, which are incompatible with RISC-V executables like `fibonacci.elf`. If you have a computer equipped with a RISC-V processor, you can directly execute `fibonacci.elf` on it.
+
+For those using `x86-64` or `arm64` processors, it is possible to simulate RISC-V executables using RISC-V ISA simulators. The `spike` simulator is a production-grade RISC-V ISA simulator available in our lab's development environment. Please check its installation by running the following command:
+
+```bash
+spike --help
+```
+
+If you see `spike` help text, everything is set up correctly.
+
+We first use the simulator in the interactive mode, where we can instruct commands to the simulator one by one. To start the simulation of `fibonacci.elf` in the interactive mode, please run the command in your terminal as follows:
+
+```
+spike -d fibonacci.elf
+```
+
+Now you are in the interactive shell where you can give commands to the simulator. You can find the most commonly used commands for `spike` in the following table.
+
+
+| Interactive commands     | Description                                                |
+|--------------------------|------------------------------------------------------------|
+| `[<ENTER>]`              | Proceed 1 steps.                                           |
+| `run [<N>]` or `r [<N>]` | Proceed `N` steps, default is 1.                           |
+
 
 ## Simulate using Whisper
 

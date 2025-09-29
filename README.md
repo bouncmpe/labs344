@@ -10,9 +10,9 @@ Docker was the first containerization platform and still is the most widely used
 
 ## Run the Lab Environment
 
-### 1) Using Docker Engine
+### 1) Using Container Engine
 
-> :warning: You need [Docker Engine](https://docs.docker.com/engine/) installed on your system to proceed. You can install the engine for Ubuntu by following [installation steps](https://docs.docker.com/engine/install/ubuntu/). You can also follow [post-installation steps](https://docs.docker.com/engine/install/linux-postinstall/) to run `docker` without `sudo`.
+> :warning: You need [Docker Engine](https://docs.docker.com/engine/) or []installed on your system to proceed. You can install the engine for Ubuntu by following [installation steps](https://docs.docker.com/engine/install/ubuntu/). You can also follow [post-installation steps](https://docs.docker.com/engine/install/linux-postinstall/) to run `docker` without `sudo`.
 
 > :warning: Windows users need to use Docker Desktop with WSL2 backend. See [the installation steps](https://docs.docker.com/desktop/install/windows-install/). 
 

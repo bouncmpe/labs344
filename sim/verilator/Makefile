@@ -1,8 +1,8 @@
 # Verilator Makefile for WALLY
-# Kunlin Han, Rose Thompson, David Harris 2024
+# SPDX-FileCopyrightText: 2024 Kunlin Han, Rose Thompson, David Harris 
+# SPDX-FileCopyrightText: 2025 Dogan Ulus 
 # SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
 
-SHELL := /bin/bash
 WALLY ?= /opt/openhwgroup/cvw
 LABS344 ?= /workspaces/labs344
 
@@ -12,7 +12,7 @@ LABS344 ?= /workspaces/labs344
 OPT=--assert
 PARAMS?=--no-trace-top
 NONPROF?=--stats
-VERILATOR_DIR=${LABS344}/sim/verilator
+VERILATOR_DIR=${WALLY}/sim/verilator
 PLUS_ARGS=
 PARAM_ARGS=
 DEFINE_ARGS=
@@ -25,13 +25,13 @@ TESTBENCH?=testbench
 # constants
 # assume WALLY variable is correctly configured in the shell environment
 # INCLUDE_PATH are paths that Verilator should search for files it needs
-INCLUDE_PATH="-I${WALLY}/config/shared" "-I${WALLY}/config/$(WALLYCONF)" "-I${WALLY}/config/deriv/$(WALLYCONF)" "-I/usr/share/verilator/include"
+INCLUDE_PATH="-I${WALLY}/config/shared" "-I${WALLY}/config/$(WALLYCONF)" "-I${WALLY}/config/deriv/$(WALLYCONF)"
 # SOURCES are source files
 SOURCES=${WALLY}/src/cvw.sv ${WALLY}/testbench/${TESTBENCH}.sv ${WALLY}/testbench/common/*.sv ${WALLY}/src/*/*.sv ${WALLY}/src/*/*/*.sv ${WALLY}/addins/verilog-ethernet/*/*.sv ${WALLY}/addins/verilog-ethernet/*/*/*/*.sv
 # DEPENDENCIES are configuration files and source files, which leads to recompilation of executables
 DEPENDENCIES=${WALLY}/config/shared/*.vh $(SOURCES)
 
-WORKDIR = $(VERILATOR_DIR)/wkdir/$(WALLYCONF)_$(TEST)
+WORKDIR = /tmp/verilator/$(WALLYCONF)_$(TEST)
 
 # regular testbench requires a wrapper defining getenvval
 ifeq ($(TESTBENCH), testbench)
