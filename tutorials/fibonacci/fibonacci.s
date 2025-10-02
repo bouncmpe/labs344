@@ -6,7 +6,7 @@
 V: .space 4*N             # Reserve 4*N bytes on memory for our output array, V, having a length of N and 32-bit members
                           # Do not assume this array is always initialized to all zeros, though often it is.
 
-# .section .data          # .data is a read-only section containing global static data (abbreviated as .data)
+# .section .data          # .data is a writable section containing global static data (abbreviated as .data)
 # Z: .word 0,1,1,2,3,5,8,13,21,34,55,89                      
 
 .section .text            # .text is a read-only section containing executable code (abbreviated as .text)
