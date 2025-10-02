@@ -117,32 +117,6 @@ RUN git clone https://github.com/riscv-software-src/riscv-isa-sim \
     make install && \
     rm -rf /tmp/riscv-isa-sim
 
-# RUN git clone https://github.com/verilator/verilator \
-#         --no-checkout \
-#         /tmp/verilator \
-#         &&\
-#     cd /tmp/verilator && \
-#     git checkout ${VERILATOR_VERSION} && \ 
-#     cmake -S . -B build -G Ninja \
-#         -DCMAKE_INSTALL_PREFIX=/usr/local \
-#         -DCMAKE_BUILD_TYPE=Release \
-#         && \
-#     cmake --build build -j"$(nproc)" && \
-#     cmake --install build && \
-#     rm -rf /tmp/verilator
-
-# RUN git clone "https://github.com/verilator/verilator" \
-#         --no-checkout \
-#         /tmp/verilator \
-#         &&\
-#     cd /tmp/verilator && \
-#     git checkout ${VERILATOR_VERSION} && \ 
-#     autoconf && \ 
-#     ./configure --prefix="/usr/local" && \ 
-#     make -j "$(nproc)" && \ 
-#     make install && \ 
-#     rm -rf /tmp/verilator
-
 FROM labs344-base as labs344-runtime
 ARG TARGETARCH TARGETOS TARGETPLATFORM TARGETVARIANT
 
@@ -156,11 +130,7 @@ COPY --from=labs344-toolchain ${RISCV_INSTALL_PREFIX} ${RISCV_INSTALL_PREFIX}
 COPY --from=labs344-toolchain /usr/local /usr/local
 
 ENV WALLY_SOURCE_DIR=/opt/openhwgroup/cvw
-
-ENV LABS344_HOME=/root
 ENV LABS344_SOURCE_DIR=/workspaces/labs344
-ENV LABS344_PYTHON_VENV_DIR=${LABS344_HOME}/.venv/labs344
-ENV LABS344_PYTHON_EXECUTABLE=${LABS344_PYTHON_VENV_DIR}/bin/python
 
 # Aliases used in Wally scripts
 ENV RISCV=${RISCV_INSTALL_PREFIX}
