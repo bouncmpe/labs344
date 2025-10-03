@@ -73,33 +73,6 @@ The `fibonacci.objdump` file is a disassembled version of our assembled code. It
 
 Our desktop computers typically use `x86_64` processors, which are incompatible with RISC-V executables like `fibonacci.elf`. If you have a computer equipped with a RISC-V processor, you can directly execute `fibonacci.elf` on it.
 
-For those using `x86-64` or `arm64` processors, it is possible to simulate RISC-V executables using RISC-V ISA simulators. The `spike` simulator is a production-grade RISC-V ISA simulator available in our lab's development environment. Please check its installation by running the following command:
-
-```bash
-spike --help
-```
-
-If you see `spike` help text, everything is set up correctly.
-
-We first use the simulator in the interactive mode, where we can instruct commands to the simulator one by one. To start the simulation of `fibonacci.elf` in the interactive mode, please run the command in your terminal as follows:
-
-```
-spike -d fibonacci.elf
-```
-
-Now you are in the interactive shell where you can give commands to the simulator. You can find the most commonly used commands for `spike` in the following table.
-
-
-| Interactive commands     | Description                                                |
-|--------------------------|------------------------------------------------------------|
-| `[<ENTER>]`              | Proceed 1 steps.                                           |
-| `run [<N>]` or `r [<N>]` | Proceed `N` steps, default is 1.                           |
-
-
-## Simulate using Spike
-
-Our desktop computers typically use `x86_64` processors, which are incompatible with RISC-V executables like `fibonacci.elf`. If you have a computer equipped with a RISC-V processor, you can directly execute `fibonacci.elf` on it.
-
 For those using `x86-64` or `arm64` processors, it is possible to simulate RISC-V executables using RISC-V ISA simulators. In our environment, we use Spike, the golden reference functional RISC-V ISA software simulator. Please check its installation by running the following command:
 
 ```bash
@@ -117,6 +90,7 @@ spike -d --isa=RV32IM fibonacci.elf
 > [!IMPORTANT]
 > Since Spike runs the program in a 64-bit core and the program is compiled for 32-bit RISC-V, we need to include `--isa=RV32IM` option to tell Spike to simulate the program on a RV32 core. 
 
+
 Now you are in the interactive shell where you can give commands to the simulator. You can find the most commonly used commands for `spike` in the following table.
 
 | Interactive commands             | Description                                                              |
@@ -133,6 +107,7 @@ Now you are in the interactive shell where you can give commands to the simulato
 | `untiln pc <CORE> <VAL>`         | Proceed until the `PC` hits `VAL` in `CORE`                              |
 | `untiln insn <CORE> <VAL>`       | Proceed until the instruction corresponding to `PC` becomes `VAL`        |
 | `quit`                           | Quit the simulation and interactive mode                                 |
+
 
 Now we are ready to simulate our Fibonacci program. Hit `Enter` or execute `run 1` command to advance the program by one instruction. You will see the executed instruction printed in your terminal.
 
@@ -184,6 +159,7 @@ Now we are ready to enter the loop and compute the rest of the sequence. For eac
 ```
 
 At the end of each cycle, you should see the following Fibonacci number printed in the `t4` register. Continue the simulation until the end or use `untiln pc 0 0x80000040` to simulate until the `DONE` label. We intentionally add an infinite loop at the end where we jump into the same location and execute the same instruction repeatedly. Feel free to `run` as many times as you wish.
+
 
 Now our computation is done. Remember that our program also writes the computed Fibonacci numbers into an array on the memory. Check all the Fibonacci numbers from the memory using their address values.
 
