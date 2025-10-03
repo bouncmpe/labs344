@@ -11,7 +11,7 @@ V: .space 4*N             # Reserve 4*N bytes on memory for our output array, V,
 
 .section .text            # .text is a read-only section containing executable code (abbreviated as .text)
 _start:                   # _start symbol is special, the program starts here
-  la sp, _stack_top       # Initialize the stack pointer to the top of the stack
+#  la sp, _stack_top      # Initialize the stack pointer to the top of the stack
   la t0, V                # Register `t0` keeps the address of the array index `i`, initially V[0]. 
   li t1, N-2              # Register `t1` keeps the loop index j, initially set to N-2
   li t2, 0                # Register `t2` keeps the Fibonacci number before the last one, initially set to 0
