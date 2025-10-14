@@ -35,6 +35,7 @@ SECTIONS
         *(.bss)
         *(.bss.*)
         *(COMMON)
+        . = ALIGN(8); 
         tohost   = .;
         . += 8;
         fromhost = .;
